@@ -1,16 +1,22 @@
 import pygame
-from threading import Thread
-
 
 pygame.init()
 pygame.display.init()
 pygame.font.init()
 
 #OPTIONS
-BOARD_SIZE = 5 # max 9 (due to current moves loading), check if >= CONNECTED_TO_WIN needed
+BOARD_SIZE = 3 # check if >= CONNECTED_TO_WIN needed
 CONNECTED_TO_WIN = 3
 WIDTH, HEIGHT = 800, 600
-BOARD_WIDTH, BOARD_HEIGHT = WIDTH-300, HEIGHT
+IS_TURN_TEXT = True
+TURN_TEXT_FONT = pygame.font.SysFont('Calibri', 60)
+WINNER_TEXT_FONT = pygame.font.SysFont('comicsnas', 60)
+MENU_FONT = pygame.font.SysFont('verdana', 75, bold = pygame.font.Font.bold)
+MENU_OPTIONS_FONT = pygame.font.SysFont('verdana', 60)
+TURN_BOARDER_WIDTH = 20
+DIS_TEXT_TO_BOARDER = 5
+BOARD_WIDTH, BOARD_HEIGHT = WIDTH - 2*TURN_BOARDER_WIDTH, HEIGHT - TURN_TEXT_FONT.get_height() - 3*TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER*2
+X_BOARD_START, Y_BOARD_START = 20, TURN_TEXT_FONT.get_height() + 40
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 BOARDER_WIDTH = 4
 
@@ -18,18 +24,39 @@ BOARDER_COLOR = (0, 0, 0)
 BACKGROUND_COLOR = (64, 64, 64)
 FPS = 60
 PLAYER_1_COLOR = (255, 255, 100)
-PLAYER_2_COLOR = (150, 50, 255)
-ROUND_TEXT_FONT = pygame.font.SysFont('comicsans', 60, bold=pygame.font.Font.bold)
-TEXT_P1 = "PLAYER 1"
-TEXT_P2 = "PLAYER 2"
+PLAYER_2_COLOR = (0, 200, 100)
+DRAW_COLOR = MENU_COLOR = (0, 200, 200)
+
+P1_NAME = "Player 1"
+P2_NAME = "Player 2"
 CLICK = pygame.USEREVENT + 1
 
 FIELD_HEIGHT, FIELD_WIDTH = (BOARD_HEIGHT - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE, (BOARD_WIDTH - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE
 ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
 # To-do:
-# better icons
-# turn text
+# menu
+# interactive menu (options get bold when cursor hovers)
+# options
+# check if text is not to long
+# options
+# test for bugs
 # add single player
+
+def draw_menu():
+    pygame.Surface.fill(WIN, BACKGROUND_COLOR)
+    header = MENU_FONT.render("MENU", True, MENU_COLOR)
+    WIN.blit(header, (WIDTH//2 - header.get_width()//2, TURN_BOARDER_WIDTH))
+    dec = pygame.Rect(TURN_BOARDER_WIDTH, TURN_BOARDER_WIDTH + header.get_height()//3, WIDTH//2 - header.get_width()//2 - 2*TURN_BOARDER_WIDTH, header.get_height()//3)
+    pygame.draw.rect(WIN, MENU_COLOR, dec)
+    pygame.draw.rect(WIN, MENU_COLOR, pygame.Rect.move(dec, header.get_width()//2 + WIDTH//2, 0))
+
+    # Important: I can draw every option separatly, but I can also make list of options and then draw them, but it would be hard to bold them when hoverd by cursor
+    text_sp = MENU_OPTIONS_FONT.render("Single Player", True, MENU_COLOR)
+    #WIN.blit(text_sp, (WIDTH//2 - text_sp.get_width()//2))
+
+
+
+    pygame.display.update()
 
 def handle_events():
     for event in pygame.event.get():
@@ -37,24 +64,24 @@ def handle_events():
                 pygame.quit()
                 exit()
 
-def draw_window(board):
+def draw_window(board, player, is_turn_text = True):
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
     #draw boarders
-    y = FIELD_HEIGHT
+    y = FIELD_HEIGHT + Y_BOARD_START
     for h in range(1, BOARD_SIZE):
-        horizontal_boarder = pygame.Rect(0, y, WIDTH, BOARDER_WIDTH)
+        horizontal_boarder = pygame.Rect(X_BOARD_START, y, BOARD_WIDTH, BOARDER_WIDTH)
         y += FIELD_HEIGHT + BOARDER_WIDTH
         pygame.draw.rect(WIN, BOARDER_COLOR, horizontal_boarder)
 
-    x = FIELD_WIDTH
+    x = FIELD_WIDTH + X_BOARD_START
     for v in range(1, BOARD_SIZE):
-        vertical_boarder = pygame.Rect(x, 0 , BOARDER_WIDTH, HEIGHT)
+        vertical_boarder = pygame.Rect(x, Y_BOARD_START , BOARDER_WIDTH, BOARD_HEIGHT)
         x += FIELD_WIDTH + BOARDER_WIDTH
         pygame.draw.rect(WIN, BOARDER_COLOR, vertical_boarder)
 
     #draw player moves
     row, col = 0, 0
-    x, y = FIELD_WIDTH//2-ICON_SIZE//2, FIELD_HEIGHT//2 - ICON_SIZE//2
+    x, y = FIELD_WIDTH//2-ICON_SIZE//2 + X_BOARD_START, FIELD_HEIGHT//2 - ICON_SIZE//2 + Y_BOARD_START
 
     while row < BOARD_SIZE:
         while col < BOARD_SIZE:
@@ -67,28 +94,60 @@ def draw_window(board):
 
             col +=1
             x += FIELD_WIDTH + BOARDER_WIDTH
-        x = FIELD_WIDTH//2 - ICON_SIZE//2
+        x = FIELD_WIDTH//2 - ICON_SIZE//2 + X_BOARD_START
         y += FIELD_HEIGHT + BOARDER_WIDTH
         col = 0
         row += 1
-        
 
-    
-    tmp = pygame.Rect(0, FIELD_HEIGHT , WIDTH, BOARDER_WIDTH)
-    pygame.draw.rect(WIN, BOARDER_COLOR, tmp)
+    # Turn text
+    if player == 1:
+        text = P1_NAME + " turn"
+        color = PLAYER_1_COLOR
+    elif player == 2:
+        text = P2_NAME + " turn"
+        color = PLAYER_2_COLOR
+    else:
+        text = "???"
+        color = DRAW_COLOR
 
+    turn_text = TURN_TEXT_FONT.render(text, True, color)
+    if is_turn_text:
+        WIN.blit(turn_text, (WIDTH//2 - turn_text.get_width()//2, TURN_BOARDER_WIDTH))
+
+    # Turn boarder
+    turn_hor_boarder = pygame.Rect(0, 0, WIDTH, TURN_BOARDER_WIDTH)
+    pygame.draw.rect(WIN, color, turn_hor_boarder)
+    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0,turn_text.get_height() + 2*DIS_TEXT_TO_BOARDER))
+    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0, HEIGHT - TURN_BOARDER_WIDTH))
+    turn_ver_boarder = pygame.Rect(0, 0, TURN_BOARDER_WIDTH, HEIGHT)
+    pygame.draw.rect(WIN, color, turn_ver_boarder)
+    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_ver_boarder, WIDTH - TURN_BOARDER_WIDTH, 0))
+
+    pygame.display.update()
+
+def draw_winner(board, winner_text, player):
+    draw_window(board, player, False)
+    if player == 0:
+        color = DRAW_COLOR
+    elif player == 1:
+        color = PLAYER_1_COLOR
+    else:
+        color = PLAYER_2_COLOR
+
+    text = WINNER_TEXT_FONT.render(winner_text, True, color)
+    WIN.blit(text, (WIDTH//2 - text.get_width()//2, TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER))
     pygame.display.update()
 
 def pos_to_index(x, y):
     i = 0
     x -= FIELD_WIDTH
-    while x>0:
+    while x> X_BOARD_START:
         i += 1
         x += -(FIELD_WIDTH + BOARDER_WIDTH)
     
     j = 0 
     y -= FIELD_HEIGHT
-    while y>0:
+    while y > Y_BOARD_START:
         j += 1 
         y += -(FIELD_HEIGHT + BOARDER_WIDTH)
 
@@ -178,7 +237,16 @@ def check_win(num, x, y, board):
 
     return False
     
+def is_board_full(board):
+    for i in range(BOARD_SIZE):
+        for j in range(BOARD_SIZE):
+            if board[i][j]==0:
+                return False
+    return True
+
 def valid_move(x, y, board):
+    if x >= BOARD_SIZE or y >= BOARD_SIZE:
+        return False
     if board[x][y] == 0:
         return True
 
@@ -187,11 +255,12 @@ def valid_move(x, y, board):
 def pvp():
     board = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
     run = True
+    draw_window(board, 1)
 
     while run:
         clock.tick(FPS)
         #player 1 turn 
-        draw_window(board)
+        draw_window(board, 1)
         good_move = False
         while not good_move:
             clock.tick(FPS)
@@ -203,14 +272,19 @@ def pvp():
                     board[r][c] = 1
                     good_move = True
 
-
-
         if check_win(1, r, c, board):
             print("Player 1 wins!")
+            draw_winner(board, P1_NAME + " Wins!", 1)
+            pygame.time.delay(3000)
+            run = False
+            break
+        elif is_board_full(board):
+            draw_winner(board, "Draw!", 0)
+            pygame.time.delay(1000)
             run = False
             break
 
-        draw_window(board)
+        draw_window(board, 2)
         pygame.time.delay(500)
 
         good_move = False
@@ -227,11 +301,17 @@ def pvp():
         
 
         if check_win(2, r, c, board):
-            print("Player 2 wins!")
+            draw_winner(board, P2_NAME + " Wins!", 2)
+            pygame.time.delay(3000)
+            run = False
+            break
+        elif is_board_full(board):
+            draw_window(board, 2)
+            pygame.time.delay(1000)
             run = False
             break
 
-        draw_window(board)
+        draw_window(board, 1)
         pygame.time.delay(500)
     
     exit()
@@ -240,6 +320,10 @@ def sp():
     pass
 
 def main():
+    draw_menu()
+    #while True:
+    #    handle_events()
+    #pygame.time.delay(1000)
     #mode = int(input("Tryb gry \n 1) Single Player \n 2) Player vs Player \n"))
     mode = 2 #To usunac jak bedzie sp
     if mode == 1:
@@ -249,10 +333,6 @@ def main():
   
 if __name__ == "__main__":
     clock = pygame.time.Clock()
-    #T_handling = Thread(target = handle_events)
-    #T_main = Thread(target = main)
-    #T_main.start()
-    #T_handling.start()
     main()
 
     exit()
