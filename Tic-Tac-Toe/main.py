@@ -13,12 +13,15 @@ TURN_TEXT_FONT = pygame.font.SysFont('Calibri', 60)
 WINNER_TEXT_FONT = pygame.font.SysFont('comicsnas', 60)
 MENU_FONT = pygame.font.SysFont('verdana', 75, bold = pygame.font.Font.bold)
 MENU_OPTIONS_FONT = pygame.font.SysFont('verdana', 60)
+HOVERED_MENU_OPTIONS_FONT = pygame.font.SysFont('verdana', 65, bold = pygame.font.Font.bold)
 TURN_BOARDER_WIDTH = 20
 DIS_TEXT_TO_BOARDER = 5
 BOARD_WIDTH, BOARD_HEIGHT = WIDTH - 2*TURN_BOARDER_WIDTH, HEIGHT - TURN_TEXT_FONT.get_height() - 3*TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER*2
 X_BOARD_START, Y_BOARD_START = 20, TURN_TEXT_FONT.get_height() + 40
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 BOARDER_WIDTH = 4
+WINNING_LINE_WIDTH = 3*BOARDER_WIDTH
+WINNING_LINE_COLOR = (210, 60, 60)
 
 BOARDER_COLOR = (0, 0, 0)
 BACKGROUND_COLOR = (64, 64, 64)
@@ -26,21 +29,30 @@ FPS = 60
 PLAYER_1_COLOR = (255, 255, 100)
 PLAYER_2_COLOR = (0, 200, 100)
 DRAW_COLOR = MENU_COLOR = (0, 200, 200)
+HOVERED_MENU_COLOR = (0, 230, 230)
+MENU_OPTIONS = ("Single Player", "Player vs Player", "Options")
 
 P1_NAME = "Player 1"
 P2_NAME = "Player 2"
-CLICK = pygame.USEREVENT + 1
 
 FIELD_HEIGHT, FIELD_WIDTH = (BOARD_HEIGHT - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE, (BOARD_WIDTH - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE
 ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
-# To-do:
-# menu
-# interactive menu (options get bold when cursor hovers)
-# options
+
+# To-do
+# player turn as a function
 # check if text is not to long
 # options
+# save options to file
 # test for bugs
 # add single player
+
+def option_action(no):
+    if no == 0: # Single Player
+        print("Jeszcze nie zaimplementowany")
+    elif no == 1:
+        pvp()
+    elif no == 2:
+        print("Jeszcze nie zimplementowano")
 
 def draw_menu():
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
@@ -50,9 +62,26 @@ def draw_menu():
     pygame.draw.rect(WIN, MENU_COLOR, dec)
     pygame.draw.rect(WIN, MENU_COLOR, pygame.Rect.move(dec, header.get_width()//2 + WIDTH//2, 0))
 
-    # Important: I can draw every option separatly, but I can also make list of options and then draw them, but it would be hard to bold them when hoverd by cursor
-    text_sp = MENU_OPTIONS_FONT.render("Single Player", True, MENU_COLOR)
-    #WIN.blit(text_sp, (WIDTH//2 - text_sp.get_width()//2))
+    distance =  (HEIGHT - 4*TURN_BOARDER_WIDTH - MENU_FONT.get_height())// len(MENU_OPTIONS)
+    options_positiones = []
+    no_option = 0
+    x = 3*TURN_BOARDER_WIDTH + MENU_FONT.get_height()
+    for option in MENU_OPTIONS:
+        text = MENU_OPTIONS_FONT.render(option, True, MENU_COLOR)
+        options_positiones.append(pygame.Rect(WIDTH//2 - text.get_width()//2, x, text.get_width(), text.get_height()))
+        if pygame.Rect.collidepoint(options_positiones[no_option], pygame.mouse.get_pos()):
+            text = HOVERED_MENU_OPTIONS_FONT.render(option, True, HOVERED_MENU_COLOR)
+            WIN.blit(text, (WIDTH//2 - text.get_width()//2, x))
+        else:
+            WIN.blit(text, (WIDTH//2 - text.get_width()//2, x))
+        x += distance
+        
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(options_positiones[no_option], pygame.mouse.get_pos()):
+            pygame.time.delay(500)
+            option_action(no_option)
+
+        no_option += 1
+
 
 
 
@@ -138,6 +167,18 @@ def draw_winner(board, winner_text, player):
     WIN.blit(text, (WIDTH//2 - text.get_width()//2, TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER))
     pygame.display.update()
 
+def player_to_color(player):
+    if player==1:
+        return PLAYER_1_COLOR
+    elif player == 2:
+        return PLAYER_2_COLOR
+    else:
+        return DRAW_COLOR
+
+def draw_winning_line(r, player):
+    pygame.draw.line(WIN, WINNING_LINE_COLOR, (r[0], r[1]), (r[2], r[3]), WINNING_LINE_WIDTH)
+    pygame.display.update()
+
 def pos_to_index(x, y):
     i = 0
     x -= FIELD_WIDTH
@@ -153,38 +194,66 @@ def pos_to_index(x, y):
 
     return i, j
 
-def check_win(num, x, y, board):
+def index_to_pos(r, center = True, diag = True):
+    # Transform from x as a row, to x as a coordinate
+    x1 = X_BOARD_START + r[1]*(FIELD_WIDTH + BOARDER_WIDTH)
+    y1 = Y_BOARD_START + r[0]*(FIELD_HEIGHT + BOARDER_WIDTH)
+    x2 = X_BOARD_START + r[3]*(FIELD_WIDTH + BOARDER_WIDTH)
+    y2 = Y_BOARD_START + r[2]*(FIELD_HEIGHT + BOARDER_WIDTH)
 
-    #Check row x
+    if center:
+        x1 += FIELD_WIDTH//2
+        x2 += FIELD_WIDTH//2
+        y1 += FIELD_HEIGHT//2
+        y2 += FIELD_HEIGHT//2
+    elif diag:
+        x2 += FIELD_WIDTH
+        y2 += FIELD_HEIGHT - BOARDER_WIDTH
+
+    return x1, y1, x2, y2
+
+def check_win(num, x, y, board):
+    beg_x = beg_y = mbeg_x = mbeg_y = mend_x = mend_y = 0
+    #Check row x 
     in_row = max_in_row = 0
     for i in range(BOARD_SIZE):
         if board[x][i] == num:
+            if in_row == 0:
+                beg_x, beg_y = x, i
             in_row += 1
         else:
             if in_row >= max_in_row:
+                mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, x, i
                 max_in_row = in_row
             in_row = 0
 
     if in_row >= max_in_row:
+        mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, x, i
         max_in_row = in_row
     if max_in_row >= CONNECTED_TO_WIN:
-        return True
+        return mbeg_x, mbeg_y, mend_x, mend_y
 
+    beg_x = beg_y = mbeg_x = mbeg_y = mend_x = mend_y = 0    
     #Check col y
     in_col = max_in_col = 0
     for i in range(BOARD_SIZE):
         if board[i][y] == num:
+            if in_col == 0:
+                beg_x, beg_y = i, y
             in_col += 1
         else:
             if in_col >= max_in_col:
+                mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, i, y
                 max_in_col = in_col
             in_col = 0
 
     if in_col >= max_in_col:
+        mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, i, y
         max_in_col = in_col
     if max_in_col >= CONNECTED_TO_WIN:
-        return True
+        return mbeg_x, mbeg_y, mend_x, mend_y
 
+    beg_x = beg_y = mbeg_x = mbeg_y = mend_x = mend_y = 0    
     #Check left diagonal
     l_diag = max_l_diag = 0
     diag_x = x - y
@@ -196,20 +265,25 @@ def check_win(num, x, y, board):
 
     while diag_x < BOARD_SIZE and diag_y < BOARD_SIZE:
         if board[diag_x][diag_y] == num:
+            if l_diag == 0:
+                beg_x, beg_y = diag_x, diag_y
             l_diag += 1
         else:
             if l_diag >= max_l_diag:
                 max_l_diag = l_diag
+                mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, diag_x, diag_y
             l_diag = 0
         
         diag_x += 1
         diag_y += 1
 
     if l_diag >= max_l_diag:
+        mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, diag_x - 1, diag_y - 1
         max_l_diag = l_diag
     if max_l_diag >= CONNECTED_TO_WIN:
-        return True
+        return mbeg_x, mbeg_y, mend_x, mend_y
 
+    beg_x = beg_y = mbeg_x = mbeg_y = mend_x = mend_y = 0
     #Check right diagonal
     r_diag = max_r_diag = 0
     diag_x = x + y
@@ -221,9 +295,12 @@ def check_win(num, x, y, board):
 
     while diag_x >= 0 and diag_y < BOARD_SIZE:
         if board[diag_x][diag_y] == num:
+            if r_diag == 0:
+                beg_x, beg_y = diag_x, diag_y
             r_diag += 1
         else:
             if r_diag >= max_r_diag:
+                mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, diag_x, diag_y
                 max_r_diag = r_diag
             r_diag = 0
         
@@ -231,12 +308,13 @@ def check_win(num, x, y, board):
         diag_y += 1
 
     if r_diag >= max_r_diag:
+        mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, diag_x + 1, diag_y - 1
         max_r_diag = r_diag
     if max_r_diag >= CONNECTED_TO_WIN:
-        return True
+        return mbeg_x, mbeg_y, mend_x, mend_y
 
     return False
-    
+
 def is_board_full(board):
     for i in range(BOARD_SIZE):
         for j in range(BOARD_SIZE):
@@ -272,17 +350,19 @@ def pvp():
                     board[r][c] = 1
                     good_move = True
 
-        if check_win(1, r, c, board):
-            print("Player 1 wins!")
+        win = check_win(1, r, c, board)
+        if win:
             draw_winner(board, P1_NAME + " Wins!", 1)
+            pos_winning_line = index_to_pos(win)
+            draw_winning_line(pos_winning_line, 1)
             pygame.time.delay(3000)
             run = False
-            break
+            main()
         elif is_board_full(board):
             draw_winner(board, "Draw!", 0)
             pygame.time.delay(1000)
             run = False
-            break
+            main()
 
         draw_window(board, 2)
         pygame.time.delay(500)
@@ -304,12 +384,12 @@ def pvp():
             draw_winner(board, P2_NAME + " Wins!", 2)
             pygame.time.delay(3000)
             run = False
-            break
+            main()
         elif is_board_full(board):
             draw_window(board, 2)
             pygame.time.delay(1000)
             run = False
-            break
+            main()
 
         draw_window(board, 1)
         pygame.time.delay(500)
@@ -320,16 +400,10 @@ def sp():
     pass
 
 def main():
-    draw_menu()
-    #while True:
-    #    handle_events()
-    #pygame.time.delay(1000)
-    #mode = int(input("Tryb gry \n 1) Single Player \n 2) Player vs Player \n"))
-    mode = 2 #To usunac jak bedzie sp
-    if mode == 1:
-        sp()
-    else:
-        pvp()
+    while True:
+        clock.tick(FPS)
+        draw_menu()
+        handle_events()
   
 if __name__ == "__main__":
     clock = pygame.time.Clock()
