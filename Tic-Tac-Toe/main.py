@@ -30,29 +30,163 @@ PLAYER_1_COLOR = (255, 255, 100)
 PLAYER_2_COLOR = (0, 200, 100)
 DRAW_COLOR = MENU_COLOR = (0, 200, 200)
 HOVERED_MENU_COLOR = (0, 230, 230)
-MENU_OPTIONS = ("Single Player", "Player vs Player", "Options")
+MENU_OPTIONS = ("Single Player", "Player vs Player", "Options", "Exit")
+OPTIONS_OPTIONS = ("Player 1 name", "Player 2 name", "Back to menu")
+LETTER_DISTANCE = 50
+OK_COLOR = (30, 230, 30)
+NO_OK_COLOR = (230, 30, 30)
 
 P1_NAME = "Player 1"
 P2_NAME = "Player 2"
+Player1_name = ""
+Player2_name = ""
 
 FIELD_HEIGHT, FIELD_WIDTH = (BOARD_HEIGHT - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE, (BOARD_WIDTH - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE
 ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
 
 # To-do
-# player turn as a function
-# check if text is not to long
-# options
 # save options to file
 # test for bugs
 # add single player
 
+def draw_letter(x, y, letter, size):
+    letter_font = pygame.font.SysFont('Calibri', size)
+    ready_letter = letter_font.render(letter, True, MENU_COLOR)
+    WIN.blit(ready_letter, (x, y))
+
+def valid_name(name):
+    result = ""
+    for letter in name:
+        if letter != "_":
+            result += letter
+        elif letter == "_" and result != "":
+            return result
+    return result
+def text_input(x = -1, y = -1, size = 60, no_of_letters = 8):
+    x = WIDTH//2 - no_of_letters * (10+LETTER_DISTANCE) //2
+    y = HEIGHT // 2 - size
+    name = ["_" for _ in range(no_of_letters)]
+    or_x = x
+    while True:
+        WIN.fill(BACKGROUND_COLOR)
+        handle_events()
+        x = or_x
+        for i in range(no_of_letters):
+            draw_letter(x, y, name[i], size)
+            arrow_down = pygame.Rect(x+5, y + 65, 20, 10)
+            arrow_up = pygame.Rect(x+5, y - 15, 20, 10)
+
+            up = down = False
+            if pygame.Rect.collidepoint(arrow_up, pygame.mouse.get_pos()):
+                up = True
+                down = False
+            elif pygame.Rect.collidepoint(arrow_down, pygame.mouse.get_pos()):
+                up = False
+                down = True
+            else:
+                up = down = False
+
+            if pygame.mouse.get_pressed()[0] and up:
+                if name[i] == "_":
+                    name[i] = "A"
+                elif name[i] == "Z":
+                    name[i] = "_"
+                else:
+                    name[i] = chr(ord(name[i]) + 1)
+                pygame.time.delay(120)
+            elif pygame.mouse.get_pressed()[0] and down:
+                if name[i] == "_":
+                    name[i] = "Z"
+                elif name[i] == "A":
+                    name[i] = "_"
+                else:
+                    name[i] = chr(ord(name[i]) - 1)
+                pygame.time.delay(120)
+
+            if up:
+                pygame.draw.polygon(WIN, HOVERED_MENU_COLOR, ((arrow_up.x, arrow_up.y + arrow_up.height), (arrow_up.x + arrow_up.width, arrow_up.y + arrow_up.height), (arrow_up.x + arrow_up.width // 2, arrow_up.y)))
+                pygame.draw.polygon(WIN, MENU_COLOR, ((arrow_down.x, arrow_down.y), (arrow_down.x + arrow_down.width, arrow_down.y),(arrow_down.x + arrow_down.width // 2, arrow_down.y + arrow_down.height)))
+            elif down:
+                pygame.draw.polygon(WIN, MENU_COLOR, ((arrow_up.x, arrow_up.y + arrow_up.height), (arrow_up.x + arrow_up.width, arrow_up.y + arrow_up.height),(arrow_up.x + arrow_up.width // 2, arrow_up.y)))
+                pygame.draw.polygon(WIN, HOVERED_MENU_COLOR, ((arrow_down.x, arrow_down.y), (arrow_down.x + arrow_down.width, arrow_down.y), (arrow_down.x + arrow_down.width // 2, arrow_down.y + arrow_down.height)))
+            else:
+                pygame.draw.polygon(WIN, MENU_COLOR, ((arrow_up.x, arrow_up.y + arrow_up.height), (arrow_up.x + arrow_up.width, arrow_up.y + arrow_up.height), (arrow_up.x + arrow_up.width//2, arrow_up.y)))
+                pygame.draw.polygon(WIN, MENU_COLOR, ((arrow_down.x, arrow_down.y), (arrow_down.x + arrow_down.width, arrow_down.y), (arrow_down.x + arrow_down.width//2, arrow_down.y + arrow_down.height)))
+
+            x += LETTER_DISTANCE
+            if i == no_of_letters - 1:
+                ok = pygame.Rect(x, y, 20, 20)
+                hoverd = False
+                if pygame.Rect.collidepoint(ok, pygame.mouse.get_pos()):
+                    hoverd = True
+                curr_name = valid_name(name)
+                if curr_name:
+                    pygame.draw.rect(WIN, OK_COLOR, ok)
+                else:
+                    pygame.draw.rect(WIN, NO_OK_COLOR, ok)
+
+                if hoverd and pygame.mouse.get_pressed()[0] and curr_name:
+                    return curr_name
+
+        pygame.display.update()
+
+def options_option_action(no):
+    if no == 0:
+        global Player1_name
+        Player1_name = text_input()
+    elif no == 1:
+        global Player2_name
+        Player2_name = text_input()
+    elif no == 2:
+        main()
+def draw_options():
+    pygame.Surface.fill(WIN, BACKGROUND_COLOR)
+    header = MENU_FONT.render("OPTIONS", True, MENU_COLOR)
+    WIN.blit(header, (WIDTH // 2 - header.get_width() // 2, TURN_BOARDER_WIDTH))
+    dec = pygame.Rect(TURN_BOARDER_WIDTH, TURN_BOARDER_WIDTH + header.get_height() // 3, WIDTH // 2 - header.get_width() // 2 - 2 * TURN_BOARDER_WIDTH, header.get_height() // 3)
+    pygame.draw.rect(WIN, MENU_COLOR, dec)
+    pygame.draw.rect(WIN, MENU_COLOR, pygame.Rect.move(dec, header.get_width() // 2 + WIDTH // 2, 0))
+
+    distance = (HEIGHT - 4 * TURN_BOARDER_WIDTH - MENU_FONT.get_height()) // len(MENU_OPTIONS)
+    options_positiones = []
+    no_option = 0
+    x = 3 * TURN_BOARDER_WIDTH + MENU_FONT.get_height()
+    for option in OPTIONS_OPTIONS:
+        text = MENU_OPTIONS_FONT.render(option, True, MENU_COLOR)
+        options_positiones.append(
+            pygame.Rect(WIDTH // 2 - text.get_width() // 2, x, text.get_width(), text.get_height()))
+        if pygame.Rect.collidepoint(options_positiones[no_option], pygame.mouse.get_pos()):
+            text = HOVERED_MENU_OPTIONS_FONT.render(option, True, HOVERED_MENU_COLOR)
+            WIN.blit(text, (WIDTH // 2 - text.get_width() // 2, x))
+        else:
+            WIN.blit(text, (WIDTH // 2 - text.get_width() // 2, x))
+        x += distance
+
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(options_positiones[no_option], pygame.mouse.get_pos()):
+            pygame.time.delay(300)
+            while pygame.mouse.get_pressed()[0]:
+                handle_events()
+            options_option_action(no_option)
+
+        no_option += 1
+
+    pygame.display.update()
+def options():
+    while True:
+        clock.tick(FPS)
+        handle_events()
+        draw_options()
+
+        #text = text_input(100, 100, 60, 8)
 def option_action(no):
     if no == 0: # Single Player
         print("Jeszcze nie zaimplementowany")
     elif no == 1:
         pvp()
     elif no == 2:
-        print("Jeszcze nie zimplementowano")
+        options()
+    elif no == 3:
+        exit()
 
 def draw_menu():
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
@@ -62,7 +196,7 @@ def draw_menu():
     pygame.draw.rect(WIN, MENU_COLOR, dec)
     pygame.draw.rect(WIN, MENU_COLOR, pygame.Rect.move(dec, header.get_width()//2 + WIDTH//2, 0))
 
-    distance =  (HEIGHT - 4*TURN_BOARDER_WIDTH - MENU_FONT.get_height())// len(MENU_OPTIONS)
+    distance = (HEIGHT - 4*TURN_BOARDER_WIDTH - MENU_FONT.get_height())// len(MENU_OPTIONS)
     options_positiones = []
     no_option = 0
     x = 3*TURN_BOARDER_WIDTH + MENU_FONT.get_height()
@@ -75,18 +209,13 @@ def draw_menu():
         else:
             WIN.blit(text, (WIDTH//2 - text.get_width()//2, x))
         x += distance
-        
         if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(options_positiones[no_option], pygame.mouse.get_pos()):
             pygame.time.delay(500)
             option_action(no_option)
 
         no_option += 1
 
-
-
-
     pygame.display.update()
-
 def handle_events():
     for event in pygame.event.get():
             if event.type==pygame.QUIT:
@@ -130,10 +259,10 @@ def draw_window(board, player, is_turn_text = True):
 
     # Turn text
     if player == 1:
-        text = P1_NAME + " turn"
+        text = player_name(1) + " turn"
         color = PLAYER_1_COLOR
     elif player == 2:
-        text = P2_NAME + " turn"
+        text = player_name(2) + " turn"
         color = PLAYER_2_COLOR
     else:
         text = "???"
@@ -174,6 +303,16 @@ def player_to_color(player):
         return PLAYER_2_COLOR
     else:
         return DRAW_COLOR
+
+def player_name(player):
+    if player == 1 and Player1_name != "":
+        return Player1_name
+    elif player == 1:
+        return P1_NAME
+    elif Player2_name != "":
+        return Player2_name
+    else:
+        return P2_NAME
 
 def draw_winning_line(r, player):
     pygame.draw.line(WIN, WINNING_LINE_COLOR, (r[0], r[1]), (r[2], r[3]), WINNING_LINE_WIDTH)
@@ -330,6 +469,31 @@ def valid_move(x, y, board):
 
     return False
 
+def player_turn(board, player):
+    good_move = False
+    while not good_move:
+        clock.tick(FPS)
+        handle_events()
+        if pygame.mouse.get_pressed()[0]:
+            pos = pygame.mouse.get_pos()
+            c, r = pos_to_index(pos[0], pos[1])
+            if valid_move(r, c, board):
+                board[r][c] = player
+                good_move = True
+
+    win = check_win(player, r, c, board)
+    if win:
+        draw_winner(board, player_name(player) + " Wins!", player)
+        pos_winning_line = index_to_pos(win)
+        draw_winning_line(pos_winning_line, player)
+        pygame.time.delay(2000)
+        main()
+    elif is_board_full(board):
+        draw_winner(board, "Draw!", 0)
+        pygame.time.delay(1000)
+        run = False
+        main()
+
 def pvp():
     board = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
     run = True
@@ -337,62 +501,13 @@ def pvp():
 
     while run:
         clock.tick(FPS)
-        #player 1 turn 
+
         draw_window(board, 1)
-        good_move = False
-        while not good_move:
-            clock.tick(FPS)
-            handle_events()
-            if pygame.mouse.get_pressed()[0]:
-                pos = pygame.mouse.get_pos()               
-                c, r = pos_to_index(pos[0], pos[1])
-                if valid_move(r, c, board):
-                    board[r][c] = 1
-                    good_move = True
-
-        win = check_win(1, r, c, board)
-        if win:
-            draw_winner(board, P1_NAME + " Wins!", 1)
-            pos_winning_line = index_to_pos(win)
-            draw_winning_line(pos_winning_line, 1)
-            pygame.time.delay(3000)
-            run = False
-            main()
-        elif is_board_full(board):
-            draw_winner(board, "Draw!", 0)
-            pygame.time.delay(1000)
-            run = False
-            main()
-
+        player_turn(board, 1)
+        pygame.time.delay(10)
         draw_window(board, 2)
-        pygame.time.delay(500)
-
-        good_move = False
-        while not good_move:
-            clock.tick(FPS)
-            handle_events()
-            if pygame.mouse.get_pressed()[0]:
-                pos = pygame.mouse.get_pos()
-                c, r = pos_to_index(pos[0], pos[1])
-                if valid_move(r, c, board):
-                    board[r][c] = 2
-                    good_move = True
-
-        
-
-        if check_win(2, r, c, board):
-            draw_winner(board, P2_NAME + " Wins!", 2)
-            pygame.time.delay(3000)
-            run = False
-            main()
-        elif is_board_full(board):
-            draw_window(board, 2)
-            pygame.time.delay(1000)
-            run = False
-            main()
-
-        draw_window(board, 1)
-        pygame.time.delay(500)
+        player_turn(board, 2)
+        pygame.time.delay(10)
     
     exit()
 
