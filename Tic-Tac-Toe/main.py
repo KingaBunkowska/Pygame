@@ -18,11 +18,11 @@ MENU_OPTIONS_FONT = pygame.font.SysFont('verdana', 60)
 OPTIONS_OPTIONS_FONT = pygame.font.SysFont('verdana', 40)
 HOVERED_MENU_OPTIONS_FONT = pygame.font.SysFont('verdana', 65, bold = pygame.font.Font.bold)
 HOVERED_OPTIONS_OPTIONS_FONT = pygame.font.SysFont('verdana', 45, bold = pygame.font.Font.bold)
-CONFIRMATION_FONT = pygame.font.SysFont('verdana', 50, bold = pygame.font.Font.bold)
+CONFIRMATION_FONT = pygame.font.SysFont('verdana', 45, bold = pygame.font.Font.bold)
 TURN_BOARDER_WIDTH = 20
 DIS_TEXT_TO_BOARDER = 5
 BOARD_WIDTH, BOARD_HEIGHT = WIDTH - 2*TURN_BOARDER_WIDTH, HEIGHT - TURN_TEXT_FONT.get_height() - 3*TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER*2
-X_BOARD_START, Y_BOARD_START = 20, TURN_TEXT_FONT.get_height() + 40
+X_BOARD_START, Y_BOARD_START = TURN_BOARDER_WIDTH, TURN_BOARDER_WIDTH + TURN_TEXT_FONT.get_height() + TURN_BOARDER_WIDTH
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 BOARDER_WIDTH = 4
 WINNING_LINE_WIDTH = 3*BOARDER_WIDTH
@@ -36,7 +36,7 @@ PLAYER_2_COLOR = (0, 200, 100)
 DRAW_COLOR = MENU_COLOR = (0, 200, 200)
 HOVERED_MENU_COLOR = (0, 230, 230)
 MENU_OPTIONS = ("Single Player", "Player vs Player", "Options", "Exit")
-OPTIONS_OPTIONS = ("Player 1 name", "Player 2 name", "Board size",  "Defaults", "Back to menu")
+OPTIONS_OPTIONS = ("Player 1 name", "Player 2 name", "Board size", "Connected to win", "Defaults", "Back to menu")
 LETTER_DISTANCE = 50
 OK_COLOR = (30, 230, 30)
 NO_OK_COLOR = (230, 30, 30)
@@ -51,7 +51,6 @@ FIELD_HEIGHT, FIELD_WIDTH = (BOARD_HEIGHT - (BOARD_SIZE - 1) * BOARDER_WIDTH)//B
 ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
 
 # To-do
-# number input
 # test for bugs
 # add single player
 
@@ -79,8 +78,12 @@ def confirmation():
         handle_events()
         if pygame.mouse.get_pressed()[0]:
             if pygame.Rect.collidepoint(ok_button, pygame.mouse.get_pos()):
+                while pygame.mouse.get_pressed()[0]:
+                    handle_events()
                 return True
             if pygame.Rect.collidepoint(no_button, pygame.mouse.get_pos()):
+                while pygame.mouse.get_pressed()[0]:
+                    handle_events()
                 return False
 
 def recalculate():
@@ -98,7 +101,7 @@ def set_default_options():
             options.write(default.read())
 
 def load_options():
-    global Player1_name, Player2_name, BOARD_SIZE
+    global Player1_name, Player2_name, BOARD_SIZE, CONNECTED_TO_WIN
 
     with open("options.json", "r") as file:
         dict_json = json.loads(file.read())
@@ -106,10 +109,14 @@ def load_options():
             Player1_name = dict_json["Player 1 name"].upper()
         if "Player 2 name" in dict_json:
             Player2_name = dict_json["Player 2 name"].upper()
-        if "Board size" in dict_json:
+        if "Board size" in dict_json and "Connected to win" in dict_json:
             new_size = dict_json["Board size"]
-            if new_size >= 3 and new_size <= MAX_BOARD_SIZE and new_size >= CONNECTED_TO_WIN:
+            connection = dict_json["Connected to win"]
+            if new_size >= connection:
                 BOARD_SIZE = new_size
+                CONNECTED_TO_WIN = connection
+            else:
+                print("Invalid Board size and Connected to win values")
 
 def save_options():
     dict_json = None
@@ -117,6 +124,8 @@ def save_options():
         dict_json = json.loads(file.read())
         dict_json["Player 1 name"] = Player1_name
         dict_json["Player 2 name"] = Player2_name
+        dict_json["Board size"] = BOARD_SIZE
+        dict_json["Connected to win"] = CONNECTED_TO_WIN
     with open("options.json", "w") as file:
         json.dump(dict_json, file)
 
@@ -133,6 +142,76 @@ def valid_name(name):
         elif letter == "_" and result != "":
             return result
     return result
+
+def number_input(MIN, MAX, value):
+    number = value
+    Number_font = pygame.font.SysFont('Calibri', 80)
+
+
+    while True:
+        clock.tick(FPS)
+        handle_events()
+
+        WIN.fill(BACKGROUND_COLOR)
+        ok_button = pygame.Rect(WIDTH // 2 - WIDTH // 12, HEIGHT // 2 + 50, WIDTH // 6, HEIGHT // 8)
+        pygame.draw.rect(WIN, OK_COLOR, ok_button)
+        ok_text = CONFIRMATION_FONT.render("SAVE", True, BACKGROUND_COLOR)
+        WIN.blit(ok_text, (ok_button.x + ok_button.width // 2 - ok_text.get_width() // 2,
+                           ok_button.y + ok_button.height // 2 - ok_text.get_height() // 2))
+        WIN.blit(ok_text, (ok_button.x + ok_button.width // 2 - ok_text.get_width() // 2,
+                           ok_button.y + ok_button.height // 2 - ok_text.get_height() // 2))
+
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(ok_button, pygame.mouse.get_pos()):
+            while pygame.mouse.get_pressed()[0]:
+                handle_events()
+            return number
+        text = Number_font.render(str(number), True, MENU_COLOR)
+        WIN.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//2 - text.get_height()//2 - 50))
+
+        add_1_button = pygame.Rect(WIDTH//2 + text.get_width()//2 + 50, HEIGHT//2 - HEIGHT//16 - 50, WIDTH//8, HEIGHT//8)
+        pygame.draw.rect(WIN, MENU_COLOR, add_1_button)
+        add_1_text = CONFIRMATION_FONT.render("+1", True, BACKGROUND_COLOR)
+        WIN.blit(add_1_text, (add_1_button.x + add_1_button.width//2 - add_1_text.get_width()//2, add_1_button.y + add_1_button.height//2 - add_1_text.get_height()//2))
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(add_1_button, pygame.mouse.get_pos()):
+            if number < MAX:
+                number += 1
+            pygame.time.delay(130)
+
+        add_10_button = pygame.Rect(add_1_button.x + add_1_button.width + 50, add_1_button.y, add_1_button.width, add_1_button.height)
+        pygame.draw.rect(WIN, MENU_COLOR, add_10_button)
+        add_10_text = CONFIRMATION_FONT.render("+10", True, BACKGROUND_COLOR)
+        WIN.blit(add_10_text, (add_10_button.x + add_1_button.width//2 - add_10_text.get_width()//2, add_10_button.y + add_1_button.height//2 - add_10_text.get_height()//2))
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(add_10_button, pygame.mouse.get_pos()):
+            number += 10
+            if number > MAX:
+                number = MAX
+            pygame.time.delay(130)
+
+        sub_1_button = pygame.Rect(WIDTH//2 - text.get_width()//2 - add_1_button.width - 50, add_1_button.y, add_1_button.width, add_1_button.height)
+        pygame.draw.rect(WIN, MENU_COLOR, sub_1_button)
+        sub_1_text = CONFIRMATION_FONT.render("-1", True, BACKGROUND_COLOR)
+        WIN.blit(sub_1_text, (sub_1_button.x + add_1_button.width // 2 - sub_1_text.get_width() // 2,
+                               sub_1_button.y + add_1_button.height // 2 - sub_1_text.get_height() // 2))
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(sub_1_button, pygame.mouse.get_pos()):
+            number -= 1
+            if number < MIN:
+                number = MIN
+            pygame.time.delay(130)
+
+        sub_10_button = pygame.Rect(sub_1_button.x - add_1_button.width - 50, add_1_button.y,
+                                   add_1_button.width, add_1_button.height)
+        pygame.draw.rect(WIN, MENU_COLOR, sub_10_button)
+        sub_10_text = CONFIRMATION_FONT.render("-10", True, BACKGROUND_COLOR)
+        WIN.blit(sub_10_text, (sub_10_button.x + add_1_button.width // 2 - sub_10_text.get_width() // 2,
+                               sub_10_button.y + add_1_button.height // 2 - sub_10_text.get_height() // 2))
+        if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(sub_10_button, pygame.mouse.get_pos()):
+            number -= 10
+            if number < MIN:
+                number = MIN
+            pygame.time.delay(130)
+
+
+        pygame.display.update()
 
 def text_input(x = -1, y = -1, size = 60, no_of_letters = 8):
     x = WIDTH//2 - no_of_letters * (10+LETTER_DISTANCE) //2
@@ -203,6 +282,7 @@ def text_input(x = -1, y = -1, size = 60, no_of_letters = 8):
         pygame.display.update()
 
 def options_option_action(no):
+    global CONNECTED_TO_WIN
     if no == 0:
         global Player1_name
         Player1_name = text_input()
@@ -212,13 +292,19 @@ def options_option_action(no):
         Player2_name = text_input()
         save_options()
     elif no == 2:
-        pass
+        global BOARD_SIZE
+        BOARD_SIZE = number_input(CONNECTED_TO_WIN, MAX_BOARD_SIZE, BOARD_SIZE)
+        save_options()
+        recalculate()
     elif no == 3:
+        CONNECTED_TO_WIN = number_input(1, BOARD_SIZE, CONNECTED_TO_WIN)
+        save_options()
+    elif no == 4:
         if confirmation():
             set_default_options()
             load_options()
             recalculate()
-    elif no == 4:
+    elif no == 5:
         main()
 def draw_options():
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
@@ -297,6 +383,7 @@ def draw_menu():
         no_option += 1
 
     pygame.display.update()
+
 def handle_events():
     for event in pygame.event.get():
             if event.type==pygame.QUIT:
@@ -314,7 +401,7 @@ def draw_window(board, player, is_turn_text = True):
 
     x = FIELD_WIDTH + X_BOARD_START
     for v in range(1, BOARD_SIZE):
-        vertical_boarder = pygame.Rect(x, Y_BOARD_START , BOARDER_WIDTH, BOARD_HEIGHT)
+        vertical_boarder = pygame.Rect(x, Y_BOARD_START, BOARDER_WIDTH, BOARD_HEIGHT)
         x += FIELD_WIDTH + BOARDER_WIDTH
         pygame.draw.rect(WIN, BOARDER_COLOR, vertical_boarder)
 
@@ -351,12 +438,12 @@ def draw_window(board, player, is_turn_text = True):
 
     turn_text = TURN_TEXT_FONT.render(text, True, color)
     if is_turn_text:
-        WIN.blit(turn_text, (WIDTH//2 - turn_text.get_width()//2, TURN_BOARDER_WIDTH))
+        WIN.blit(turn_text, (WIDTH//2 - turn_text.get_width()//2, TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER))
 
     # Turn boarder
     turn_hor_boarder = pygame.Rect(0, 0, WIDTH, TURN_BOARDER_WIDTH)
     pygame.draw.rect(WIN, color, turn_hor_boarder)
-    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0,turn_text.get_height() + 2*DIS_TEXT_TO_BOARDER))
+    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0,turn_text.get_height() + TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER)) # + 2*DIS_TEXT_TO_BOARDER
     pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0, HEIGHT - TURN_BOARDER_WIDTH))
     turn_ver_boarder = pygame.Rect(0, 0, TURN_BOARDER_WIDTH, HEIGHT)
     pygame.draw.rect(WIN, color, turn_ver_boarder)
