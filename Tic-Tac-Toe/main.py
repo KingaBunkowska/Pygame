@@ -42,8 +42,9 @@ OK_COLOR = (30, 230, 30)
 NO_OK_COLOR = (230, 30, 30)
 BACKGROUND_CONFIRMATION_COLOR = (50, 50, 50)
 
-P1_NAME = "Player 1"
-P2_NAME = "Player 2"
+P1_NAME = "PLAYER 1"
+P2_NAME = "PLAYER 2"
+SP_NAME = "PLAYER"
 Player1_name = ""
 Player2_name = ""
 
@@ -52,7 +53,6 @@ ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
 
 # To-do
 # test for bugs
-# add single player
 
 def confirmation():
     WIN.fill(BACKGROUND_COLOR)
@@ -282,7 +282,7 @@ def text_input(x = -1, y = -1, size = 60, no_of_letters = 8):
         pygame.display.update()
 
 def options_option_action(no):
-    global CONNECTED_TO_WIN
+    global CONNECTED_TO_WIN, BOARD_SIZE
     if no == 0:
         global Player1_name
         Player1_name = text_input()
@@ -292,7 +292,6 @@ def options_option_action(no):
         Player2_name = text_input()
         save_options()
     elif no == 2:
-        global BOARD_SIZE
         BOARD_SIZE = number_input(CONNECTED_TO_WIN, MAX_BOARD_SIZE, BOARD_SIZE)
         save_options()
         recalculate()
@@ -347,7 +346,7 @@ def options():
         #text = text_input(100, 100, 60, 8)
 def option_action(no):
     if no == 0: # Single Player
-        print("Jeszcze nie zaimplementowany")
+        sp()
     elif no == 1:
         pvp()
     elif no == 2:
@@ -455,7 +454,7 @@ def draw_winner(board, winner_text, player):
     draw_window(board, player, False)
     if player == 0:
         color = DRAW_COLOR
-    elif player == 1:
+    elif player == 1 or player == 3:
         color = PLAYER_1_COLOR
     else:
         color = PLAYER_2_COLOR
@@ -467,7 +466,7 @@ def draw_winner(board, winner_text, player):
 def player_to_color(player):
     if player==1:
         return PLAYER_1_COLOR
-    elif player == 2:
+    elif player == 2 or player == 3:
         return PLAYER_2_COLOR
     else:
         return DRAW_COLOR
@@ -479,8 +478,12 @@ def player_name(player):
         return P1_NAME
     elif Player2_name != "":
         return Player2_name
-    else:
+    elif player == 2:
         return P2_NAME
+    elif player == 3 and Player2_name != "":
+        return Player2_name
+    else:
+        return SP_NAME
 
 def draw_winning_line(r, player):
     pygame.draw.line(WIN, WINNING_LINE_COLOR, (r[0], r[1]), (r[2], r[3]), WINNING_LINE_WIDTH)
@@ -607,7 +610,7 @@ def check_win(num, x, y, board):
             r_diag += 1
         else:
             if r_diag >= max_r_diag:
-                mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, diag_x - 1, diag_y - 1
+                mbeg_x, mbeg_y, mend_x, mend_y = beg_x, beg_y, diag_x + 1, diag_y - 1
                 max_r_diag = r_diag
             r_diag = 0
         
@@ -679,8 +682,156 @@ def pvp():
     
     exit()
 
+def in_board(a):
+    global BOARD_SIZE
+    return a>=0 and a < BOARD_SIZE
+
+def neighbours(board, x, y):
+    dirs=((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+    result = [0, 0, 0]
+    for dir in dirs:
+        a, b = x + dir[0], y + dir[1]
+        if in_board(a) and in_board(b):
+            result[board[a][b]] += 1
+    return result
+
+# owner of board[x][y] tile, to prevent ai form minding its own business when board_size > connected_to_win increase importance of tiles needed for num to win
+def increase_in_neighbors_line(x, y, board, calc, val):
+    dirs=((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+    for dir in dirs:
+        a, b = x + dir[0], y + dir[1]
+        if in_board(a) and in_board(b) and board[a][b] == board[x][y]:
+            c, d = a + dir[0], b + dir[1]
+            if in_board(c) and in_board(d) and board[c][d] == 0:
+                calc[c][d] += val
+
+def how_much_in_row_possibble(x, y, board, num):
+    dirs = ((-1, -1), (-1, 0), (-1, 1), (0, -1))
+    MaxDir = (-1, -1)
+    MaxRes = 0
+    results = [0, 0, 0, 0]
+    i = 0
+    for dir in dirs:
+        a, b = x + dir[0], y+ dir[1]
+        c, d = x - dir[0], y - dir[1]
+        while in_board(a) and in_board(b) and board[a][b] == num :
+            results[i] += 1
+            a += dir[0]
+            b += dir[1]
+        while in_board(c) and in_board(d) and board[c][d] == num:
+            results[i] += 1
+            c -= dir[0]
+            d -= dir[1]
+
+        if results[i] > MaxRes:
+            MaxRes = results[i]
+            MaxDir = dir
+        i += 1
+
+
+    return MaxRes, MaxDir
+
+def possible_to_win(x, y, board): # how many possible wins form this tile (to avoid taking pointless tiles)
+    dirs = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+    result = 0
+    for dir in dirs:
+        pos_moves_in_line = 1
+        a, b = x + dir[0], y + dir[1]
+        while in_board(a) and in_board(b):
+            if board[a][b] == 0:
+                pos_moves_in_line += 1
+            elif pos_moves_in_line >= CONNECTED_TO_WIN:
+                result += 1
+                break
+            else:
+                break
+            if pos_moves_in_line >= CONNECTED_TO_WIN:
+                result += 1
+                break
+            a += dir[0]
+            b += dir[1]
+
+    return result
+
+def ai_move(board):
+    calculated_moves = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+    Max_row = Max_col = Max_val = -1
+    mod_board = board
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+
+            if board[row][col] != 0:
+                calculated_moves[row][col] = -1
+                increase_in_neighbors_line(row, col, board, calculated_moves, 60)
+            else:
+                mod_board[row][col] = 2
+                if check_win(2, row, col, board):
+                    print(row, col)
+                    calculated_moves[row][col] += 3000
+                mod_board[row][col] = 1
+                if check_win(1, row, col, board):
+                    calculated_moves[row][col] += 1000
+                mod_board[row][col] = 0
+                neares_tiles = neighbours(board, row, col)
+
+                calculated_moves[row][col] += 7 * neares_tiles[0]
+                calculated_moves[row][col] += 3 * neares_tiles[1]
+                calculated_moves[row][col] += 10 * neares_tiles[2]
+
+                calculated_moves[row][col] += 20 * possible_to_win(row, col, board)
+                calculated_moves[row][col] += 8 * how_much_in_row_possibble(row, col, board, 2)[0]
+                calculated_moves[row][col] += 10 * how_much_in_row_possibble(row, col, board, 1)[0] # how much opponent may have next turn
+
+                mod_board[row][col] = 1
+                increase_in_neighbors_line(row, col, mod_board, calculated_moves, 10)
+                mod_board[row][col] = 2
+                increase_in_neighbors_line(row, col, mod_board, calculated_moves, 10)
+                mod_board[row][col] = 0
+
+                if how_much_in_row_possibble(row, col, board, 1) == CONNECTED_TO_WIN - 1:
+                    calculated_moves[row, col] += 550
+
+                if calculated_moves[row][col] > Max_val:
+                    Max_val = calculated_moves[row][col]
+                    Max_row = row
+                    Max_col = col
+
+    # print(calculated_moves)
+
+    return Max_row, Max_col
+
+def ai_turn(board):
+    x, y = ai_move(board)
+    board[x][y] = 2
+    win = check_win(2, x, y, board)
+    if win:
+        draw_winner(board, "GAME OVER!", 2)
+        pos_winning_line = index_to_pos(win)
+        draw_winning_line(pos_winning_line, 2)
+        pygame.time.delay(1000)
+        main()
+    elif is_board_full(board):
+        draw_winner(board, "Draw!", 0)
+        pygame.time.delay(1000)
+        run = False
+        main()
+
 def sp():
-    pass
+    board = [[0 for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+    run = True
+
+    while run:
+        clock.tick(FPS)
+
+        draw_window(board, 1)
+        player_turn(board, 1)
+        pygame.time.delay(10)
+
+        draw_window(board, 2)
+        ai_turn(board)
+        pygame.time.delay(10)
+
+
 
 def main():
     load_options()
