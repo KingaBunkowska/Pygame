@@ -4,6 +4,7 @@ import json
 pygame.init()
 pygame.display.init()
 pygame.font.init()
+pygame.mixer.init()
 
 #OPTIONS
 BOARD_SIZE = 3
@@ -42,11 +43,14 @@ OK_COLOR = (30, 230, 30)
 NO_OK_COLOR = (230, 30, 30)
 BACKGROUND_CONFIRMATION_COLOR = (50, 50, 50)
 
+
 P1_NAME = "PLAYER 1"
 P2_NAME = "PLAYER 2"
 SP_NAME = "PLAYER"
 Player1_name = ""
 Player2_name = ""
+MENU_BUTTON = None
+
 
 FIELD_HEIGHT, FIELD_WIDTH = (BOARD_HEIGHT - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE, (BOARD_WIDTH - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE
 ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
@@ -385,11 +389,11 @@ def draw_menu():
 
 def handle_events():
     for event in pygame.event.get():
-            if event.type==pygame.QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
 
-def draw_window(board, player, is_turn_text = True):
+def draw_window(board, player, is_turn_text = True, sp = False):
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
     #draw boarders
     y = FIELD_HEIGHT + Y_BOARD_START
@@ -412,7 +416,7 @@ def draw_window(board, player, is_turn_text = True):
         while col < BOARD_SIZE:
             if board[row][col] == 1:
                 pygame.draw.line(WIN, PLAYER_1_COLOR,  (x, y), (x + ICON_SIZE, y+ICON_SIZE), ICON_SIZE//4)
-                pygame.draw.line(WIN, PLAYER_1_COLOR ,(x + ICON_SIZE, y), (x, y+ICON_SIZE), ICON_SIZE//4)
+                pygame.draw.line(WIN, PLAYER_1_COLOR, (x + ICON_SIZE, y), (x, y+ICON_SIZE), ICON_SIZE//4)
             elif board[row][col] == 2:
                 tmp = pygame.Rect(x, y, ICON_SIZE, ICON_SIZE)
                 pygame.draw.circle(WIN, PLAYER_2_COLOR, (x+ICON_SIZE//2, y+ICON_SIZE//2), round(ICON_SIZE/1.5), ICON_SIZE//4)
@@ -425,12 +429,15 @@ def draw_window(board, player, is_turn_text = True):
         row += 1
 
     # Turn text
-    if player == 1:
+    if player == 1 and sp == False:
         text = player_name(1) + " turn"
         color = PLAYER_1_COLOR
     elif player == 2:
         text = player_name(2) + " turn"
         color = PLAYER_2_COLOR
+    elif sp:
+        text = player_name(3) + " turn"
+        color = PLAYER_1_COLOR
     else:
         text = "???"
         color = DRAW_COLOR
@@ -442,16 +449,24 @@ def draw_window(board, player, is_turn_text = True):
     # Turn boarder
     turn_hor_boarder = pygame.Rect(0, 0, WIDTH, TURN_BOARDER_WIDTH)
     pygame.draw.rect(WIN, color, turn_hor_boarder)
-    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0,turn_text.get_height() + TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER)) # + 2*DIS_TEXT_TO_BOARDER
+    pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0,turn_text.get_height() + TURN_BOARDER_WIDTH + DIS_TEXT_TO_BOARDER))
     pygame.draw.rect(WIN, color, pygame.Rect.move(turn_hor_boarder, 0, HEIGHT - TURN_BOARDER_WIDTH))
     turn_ver_boarder = pygame.Rect(0, 0, TURN_BOARDER_WIDTH, HEIGHT)
     pygame.draw.rect(WIN, color, turn_ver_boarder)
     pygame.draw.rect(WIN, color, pygame.Rect.move(turn_ver_boarder, WIDTH - TURN_BOARDER_WIDTH, 0))
 
+    global MENU_BUTTON
+    menu_button = MENU_BUTTON = pygame.Rect(TURN_BOARDER_WIDTH + 10, TURN_BOARDER_WIDTH + (turn_text.get_height() + DIS_TEXT_TO_BOARDER)//2 - HEIGHT//32, WIDTH//12,  HEIGHT//16)
+    pygame.draw.rect(WIN, MENU_COLOR, menu_button)
+
+    # draw arrow on menu_button
+    pygame.draw.polygon(WIN, BACKGROUND_COLOR, ((MENU_BUTTON.x + 5, MENU_BUTTON.y + MENU_BUTTON.height//2), (MENU_BUTTON.x + 25, MENU_BUTTON.y + 5), (MENU_BUTTON.x + 25, MENU_BUTTON.y + MENU_BUTTON.height - 5)))
+    pygame.draw.rect(WIN, BACKGROUND_COLOR, (MENU_BUTTON.x + 25, MENU_BUTTON.y + MENU_BUTTON.height//2 - 5, 30, 10))
+
     pygame.display.update()
 
-def draw_winner(board, winner_text, player):
-    draw_window(board, player, False)
+def draw_winner(board, winner_text, player, sp = False):
+    draw_window(board, player, False, sp = sp)
     if player == 0:
         color = DRAW_COLOR
     elif player == 1 or player == 3:
@@ -474,14 +489,14 @@ def player_to_color(player):
 def player_name(player):
     if player == 1 and Player1_name != "":
         return Player1_name
-    elif player == 1:
+    if player == 1:
         return P1_NAME
-    elif Player2_name != "":
+    if player == 2 and Player2_name != "":
         return Player2_name
-    elif player == 2:
+    if player == 2:
         return P2_NAME
-    elif player == 3 and Player2_name != "":
-        return Player2_name
+    if player == 3 and Player1_name != "":
+        return Player1_name
     else:
         return SP_NAME
 
@@ -640,21 +655,36 @@ def valid_move(x, y, board):
 
     return False
 
-def player_turn(board, player):
+def is_menu_button_pressed(menu_button):
+    if pygame.mouse.get_pressed()[0] and pygame.Rect.collidepoint(menu_button, pygame.mouse.get_pos()):
+        if confirmation():
+                return True
+    return False
+
+def player_turn(board, player, sp = False):
     good_move = False
     while not good_move:
         clock.tick(FPS)
         handle_events()
-        if pygame.mouse.get_pressed()[0]:
-            pos = pygame.mouse.get_pos()
-            c, r = pos_to_index(pos[0], pos[1])
-            if valid_move(r, c, board):
-                board[r][c] = player
-                good_move = True
-
+        if is_menu_button_pressed(MENU_BUTTON):
+            main()
+        else:
+            if sp == False:
+                draw_window(board, player)
+            else:
+                draw_window(board, 3, sp = True)
+            if pygame.mouse.get_pressed()[0]:
+                pos = pygame.mouse.get_pos()
+                c, r = pos_to_index(pos[0], pos[1])
+                if valid_move(r, c, board):
+                    board[r][c] = player
+                    good_move = True
     win = check_win(player, r, c, board)
     if win:
-        draw_winner(board, player_name(player) + " Wins!", player)
+        if sp:
+            draw_winner(board, player_name(3) + " Wins!", player, sp)
+        else:
+            draw_winner(board, player_name(player) + " Wins!", player, sp)
         pos_winning_line = index_to_pos(win)
         draw_winning_line(pos_winning_line, player)
         pygame.time.delay(2000)
@@ -766,7 +796,6 @@ def ai_move(board):
             else:
                 mod_board[row][col] = 2
                 if check_win(2, row, col, board):
-                    print(row, col)
                     calculated_moves[row][col] += 3000
                 mod_board[row][col] = 1
                 if check_win(1, row, col, board):
@@ -823,19 +852,18 @@ def sp():
     while run:
         clock.tick(FPS)
 
-        draw_window(board, 1)
-        player_turn(board, 1)
-        pygame.time.delay(10)
+        draw_window(board, 1, sp = True)
+        player_turn(board, 1, sp = True)
+        pygame.time.delay(100)
 
-        draw_window(board, 2)
+        draw_window(board, 2, sp = True)
         ai_turn(board)
-        pygame.time.delay(10)
-
-
 
 def main():
     load_options()
     recalculate()
+    while pygame.mouse.get_pressed()[0]:
+        handle_events()
     while True:
         clock.tick(FPS)
         draw_menu()
