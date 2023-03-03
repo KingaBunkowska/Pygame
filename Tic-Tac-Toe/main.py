@@ -1,5 +1,6 @@
 import pygame
 import json
+import os
 
 pygame.init()
 pygame.display.init()
@@ -100,14 +101,16 @@ def recalculate():
         WINNING_LINE_WIDTH = 2*BOARDER_WIDTH
 
 def set_default_options():
-    with open("options.json", "w") as options:
+    sourceFileDir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(sourceFileDir, "options.json"), "w") as options:
         with open("default_options.json", "r") as default:
             options.write(default.read())
 
 def load_options():
     global Player1_name, Player2_name, BOARD_SIZE, CONNECTED_TO_WIN
-
-    with open("options.json", "r") as file:
+    
+    sourceFileDir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(sourceFileDir, "options.json"), "r") as file:
         dict_json = json.loads(file.read())
         if "Player 1 name" in dict_json:
             Player1_name = dict_json["Player 1 name"].upper()
@@ -124,13 +127,14 @@ def load_options():
 
 def save_options():
     dict_json = None
-    with open("options.json", "r") as file:
+    sourceFileDir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(sourceFileDir, "options.json"), "r") as file:
         dict_json = json.loads(file.read())
         dict_json["Player 1 name"] = Player1_name
         dict_json["Player 2 name"] = Player2_name
         dict_json["Board size"] = BOARD_SIZE
         dict_json["Connected to win"] = CONNECTED_TO_WIN
-    with open("options.json", "w") as file:
+    with open(os.path.join(sourceFileDir, "options.json"), "w") as file:
         json.dump(dict_json, file)
 
 def draw_letter(x, y, letter, size):
