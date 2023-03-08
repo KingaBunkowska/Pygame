@@ -107,10 +107,10 @@ def border_control(x, y, type):
 def shot(player, player_bullets):
     if player.x <= BORDER.x-SPACESHIP_WIDTH:
         bullet = pygame.Rect(player.x + SPACESHIP_WIDTH, player.y + SPACESHIP_HEIGHT//2 - BULLET_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT)
-        print("Yellow: pew!")
+        #print("Yellow: pew!")
     else:
         bullet = pygame.Rect(player.x, player.y + SPACESHIP_HEIGHT//2 - BULLET_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT)
-        print("Red: pew!")
+        #print("Red: pew!")
 
     player_bullets.append(bullet)
 
@@ -129,7 +129,6 @@ def handle_bullets(yellow_bullets, red_bullets, yellow, red):
         bullet.x -= BULLET_VEL
         if yellow.colliderect(bullet):
             pygame.event.post(pygame.event.Event(YELLOW_HIT))
-            print("Trafiony żółty")
             red_bullets.remove(bullet)
         if bullet.x <= 0:
             red_bullets.remove(bullet)
