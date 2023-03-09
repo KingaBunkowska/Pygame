@@ -56,6 +56,8 @@ MENU_BUTTON = None
 FIELD_HEIGHT, FIELD_WIDTH = (BOARD_HEIGHT - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE, (BOARD_WIDTH - (BOARD_SIZE - 1) * BOARDER_WIDTH)//BOARD_SIZE
 ICON_SIZE = min(FIELD_HEIGHT, FIELD_WIDTH)//2
 
+
+
 # To-do
 # test for bugs
 
@@ -313,6 +315,7 @@ def options_option_action(no):
             recalculate()
     elif no == 5:
         main()
+
 def draw_options():
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
     header = MENU_FONT.render("OPTIONS", True, MENU_COLOR)
@@ -345,6 +348,7 @@ def draw_options():
         no_option += 1
 
     pygame.display.update()
+
 def options():
     while True:
         clock.tick(FPS)
@@ -363,6 +367,7 @@ def option_action(no):
         exit()
 
 def draw_menu():
+
     pygame.Surface.fill(WIN, BACKGROUND_COLOR)
     header = MENU_FONT.render("MENU", True, MENU_COLOR)
     WIN.blit(header, (WIDTH//2 - header.get_width()//2, TURN_BOARDER_WIDTH))
@@ -390,6 +395,7 @@ def draw_menu():
         no_option += 1
 
     pygame.display.update()
+
 
 def handle_events():
     for event in pygame.event.get():

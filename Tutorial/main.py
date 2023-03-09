@@ -30,14 +30,15 @@ YELLOW_HIT = pygame.USEREVENT + 1
 RED_HIT = pygame.USEREVENT + 2
 
 # ASSETS
-YELLOW_SPACESHIP_IMAGE = pygame.image.load(os.path.join('Assets', 'spaceship_yellow.png'))
+sourceFileDir = os.path.dirname(os.path.abspath(__file__))
+YELLOW_SPACESHIP_IMAGE = pygame.image.load(os.path.join(sourceFileDir, 'Assets', 'spaceship_yellow.png'))
 YELLOW_SPACESHIP = pygame.transform.rotate(pygame.transform.scale(YELLOW_SPACESHIP_IMAGE, (SPACESHIP_WIDTH, SPACESHIP_HEIGHT)), 90)
-RED_SPACESHIP_IMAGE = pygame.image.load(os.path.join('Assets', 'spaceship_red.png'))
+RED_SPACESHIP_IMAGE = pygame.image.load(os.path.join(sourceFileDir, 'Assets', 'spaceship_red.png'))
 RED_SPACESHIP = pygame.transform.rotate(pygame.transform.scale(RED_SPACESHIP_IMAGE, (SPACESHIP_WIDTH, SPACESHIP_HEIGHT)), 270)
-SPACE = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'space2.jpg')), (WIDTH, HEIGHT))
+SPACE = pygame.transform.scale(pygame.image.load(os.path.join(sourceFileDir, 'Assets', 'space2.jpg')), (WIDTH, HEIGHT))
 #Sound
-BULLET_HIT_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'Grenade+1.mp3'))
-BULLET_FIRE_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'Gun+Silencer.mp3'))
+BULLET_HIT_SOUND = pygame.mixer.Sound(os.path.join(sourceFileDir, 'Assets', 'Grenade+1.mp3'))
+BULLET_FIRE_SOUND = pygame.mixer.Sound(os.path.join(sourceFileDir, 'Assets', 'Gun+Silencer.mp3'))
 
 
 def draw_window(red, yellow, yellow_bullets, red_bullets, yellow_health, red_health):
@@ -107,10 +108,10 @@ def border_control(x, y, type):
 def shot(player, player_bullets):
     if player.x <= BORDER.x-SPACESHIP_WIDTH:
         bullet = pygame.Rect(player.x + SPACESHIP_WIDTH, player.y + SPACESHIP_HEIGHT//2 - BULLET_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT)
-        print("Yellow: pew!")
+        #print("Yellow: pew!")
     else:
         bullet = pygame.Rect(player.x, player.y + SPACESHIP_HEIGHT//2 - BULLET_HEIGHT, BULLET_WIDTH, BULLET_HEIGHT)
-        print("Red: pew!")
+        #print("Red: pew!")
 
     player_bullets.append(bullet)
 
@@ -129,7 +130,6 @@ def handle_bullets(yellow_bullets, red_bullets, yellow, red):
         bullet.x -= BULLET_VEL
         if yellow.colliderect(bullet):
             pygame.event.post(pygame.event.Event(YELLOW_HIT))
-            print("Trafiony żółty")
             red_bullets.remove(bullet)
         if bullet.x <= 0:
             red_bullets.remove(bullet)
@@ -164,7 +164,7 @@ def main():
                     shot(yellow, yellow_bullets)
                     BULLET_FIRE_SOUND.play()
 
-                if event.key == pygame.K_KP0 and len(red_bullets) < MAX_BULLETS:
+                if event.key == pygame.K_RALT and len(red_bullets) < MAX_BULLETS:
                     shot(red, red_bullets)
                     BULLET_FIRE_SOUND.play()
 
