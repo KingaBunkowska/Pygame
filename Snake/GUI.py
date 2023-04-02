@@ -58,9 +58,10 @@ class GUI:
 
         #pygame.display.update()
 
-    def draw_fruit(self):
-        fruit_coordinates = self.pos_to_coordinates(self.game.fruit)
-        pygame.draw.circle(self.WIN, self.FRUIT_COLOR, (fruit_coordinates[0]+self.FIELD_SIZE//2, fruit_coordinates[1]+self.FIELD_SIZE//2), self.FIELD_SIZE//2)
+    def draw_fruits(self):
+        for fruit in self.game.fruits:
+            fruit_coordinates = self.pos_to_coordinates(fruit)
+            pygame.draw.circle(self.WIN, self.FRUIT_COLOR, (fruit_coordinates[0]+self.FIELD_SIZE//2, fruit_coordinates[1]+self.FIELD_SIZE//2), self.FIELD_SIZE//2)
 
         #pygame.display.update()
 
