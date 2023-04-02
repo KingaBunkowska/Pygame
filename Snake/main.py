@@ -1,6 +1,6 @@
 import pygame.event
 
-import game
+import Game
 import GUI
 
 FPS = 60
@@ -15,7 +15,7 @@ def handle_events(game = None):
 
 
 if __name__ == "__main__":
-    game = game.Game()
+    game = Game.Game()
     games =[game]
     gui = GUI.GUI(game, 0, 0)
     clock = pygame.time.Clock()
@@ -28,12 +28,18 @@ if __name__ == "__main__":
         gui.draw_board()
         gui.draw_snake()
         gui.draw_fruits()
+
         pygame.display.flip()
         ticks_in_game+=1
         if ticks_in_game%10 == 9:
             game.snake.move()
             game.turn_activity()
 # TO-DO
-# in game make methode on_tick which would handle moving snake, checking is fruit eaten, also it should take player keyboard presses
 # probably game class need variable current_dir so snake is moved when any key presses are not detected
 # when fruits are adjusted the second is left unpicked
+# when snake covers all board it should be win
+# handle how many fruits can be generated (and maybe if there is not a place for it it should not be placed but the game would continue)
+# score
+# problems when more than one game works in the same time
+# when you try to eat the food just by the wall you die before moving onto fruit (because when you move you are forced to move)
+# snake should change color to indicates how long will this body part stay on field

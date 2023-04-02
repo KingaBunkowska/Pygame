@@ -35,3 +35,14 @@ class Snake:
             if body_part == (x, y):
                 return True
         return False
+
+    def collide(self, board_size):
+        head = self.head()
+        for i in range(1, len(self.snake_body)):
+            if self.snake_body[i] == head:
+                return True
+
+        if head[0]<0 or head[1]<0 or head[0]>=board_size or head[1]>=board_size:
+            return True
+
+        return False

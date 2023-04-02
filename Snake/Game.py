@@ -53,6 +53,12 @@ class Game:
                 self.snake_eats_fruit()
                 self.fruits.pop(fruit_no)
 
+        if self.snake.collide(self.board_size):
+            print("GAME OVER!")
+            pygame.quit()
+            exit()
+
+
         self.last_dir = self.turn_dir
     def handle_player_moves(self, event):
         dir = self.last_dir
@@ -69,6 +75,5 @@ class Game:
             if dir[0] == (-1)*self.last_dir[0] and dir[1] == (-1)*self.last_dir[1]:
                 dir = self.turn_dir
 
-            print(dir, self.snake.dir)
             self.turn_dir = dir
             self.snake.set_dir(dir)
