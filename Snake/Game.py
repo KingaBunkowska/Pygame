@@ -38,8 +38,9 @@ class Game:
 
     def spawn_fruit(self):
         x, y = random.randint(0,self.board_size-1), random.randint(0,self.board_size-1)
-        while self.is_field_occupied(x, y):
-            x, y = random.randint(0, self.board_size), random.randint(0, self.board_size)
+        while self.is_field_occupied(x, y) or self.snake.is_field_occupied(x, y):
+            x, y = random.randint(0, self.board_size-1), random.randint(0, self.board_size-1)
+
 
         self.fruits.append((x, y))
 

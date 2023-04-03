@@ -4,6 +4,7 @@ class Snake:
 
     lenght = 1
     dir = [1, 0]
+    is_grow = 0
 
     def __init__(self, poz_x, poz_y):
         self.snake_body = deque()
@@ -11,9 +12,17 @@ class Snake:
 
     def eat(self):
         x, y = self.tail()
-        self.move()
-        self.lenght += 1
-        self.snake_body.append((x, y))
+        self.is_grow = (x, y)
+        #self.move()
+        #self.lenght += 1
+        #self.snake_body.append((x, y))
+
+    def grow(self):
+        if self.is_grow!=0:
+            self.lenght +=1
+            self.snake_body.append((self.is_grow))
+
+        self.is_grow=0
 
     def tail(self):
         tail = self.snake_body[len(self.snake_body)-1]
@@ -28,6 +37,7 @@ class Snake:
 
     def move(self):
         self.snake_body.appendleft((self.head()[0]+self.dir[0], self.head()[1]+self.dir[1]))
+        self.grow()
         self.snake_body.pop()
 
     def is_field_occupied(self, x, y):
