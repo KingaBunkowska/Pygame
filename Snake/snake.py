@@ -2,7 +2,6 @@ from collections import deque
 
 class Snake:
 
-    lenght = 1
     dir = [1, 0]
     is_grow = 0
 
@@ -13,13 +12,10 @@ class Snake:
     def eat(self):
         x, y = self.tail()
         self.is_grow = (x, y)
-        #self.move()
-        #self.lenght += 1
-        #self.snake_body.append((x, y))
+
 
     def grow(self):
         if self.is_grow!=0:
-            self.lenght +=1
             self.snake_body.append((self.is_grow))
 
         self.is_grow=0
@@ -36,9 +32,9 @@ class Snake:
         self.dir = dir
 
     def move(self):
-        self.snake_body.appendleft((self.head()[0]+self.dir[0], self.head()[1]+self.dir[1]))
-        self.grow()
+        self.snake_body.appendleft((self.head()[0]+self.dir[0], self.head()[1]+self.dir[1]))     
         self.snake_body.pop()
+        self.grow()
 
     def is_field_occupied(self, x, y):
         for body_part in self.snake_body:

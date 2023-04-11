@@ -15,7 +15,7 @@ def handle_events(game = None):
 
 
 if __name__ == "__main__":
-    game = Game.Game(fruit_number=10)
+    game = Game.Game(fruit_number=50)
     games =[game]
     gui = GUI.GUI(game, 0, 0)
     clock = pygame.time.Clock()
@@ -37,10 +37,8 @@ if __name__ == "__main__":
             game.turn_activity()
 
 # TO-DO
-# when fruits are adjusted the second is left unpicked
 # when snake covers all board it should be win
 # handle how many fruits can be generated (and maybe if there is not a place for it it should not be placed but the game would continue)
 # score
 # problems when more than one game works in the same time
 # snake should change color to indicates how long will this body part stay on field
-# fruits are spawning inside a snake
