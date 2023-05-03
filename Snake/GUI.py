@@ -3,6 +3,11 @@ import pygame
 pygame.init()
 
 class GUI:
+
+    EYE_COLOR = (0, 0, 0)
+    EYE_WIDTH = 20
+    EYE_SIZE = 5
+    #TODO:  make eye_width precent value, so it depends on width of snake body
     def __init__(self, game, x_start, y_start, x_end=-1, y_end=-1):
 
         self.WIDTH, self.HEIGHT = 800, 600
@@ -51,7 +56,12 @@ class GUI:
         head = pygame.Rect(head_coordinates[0], head_coordinates[1], self.FIELD_SIZE, self.FIELD_SIZE)
         pygame.draw.rect(self.WIN, self.SNAKE_COLOR, head)
 
-        for i in range(len(self.game.snake.snake_body)):
+        # draw eyes
+        #TODO: make eyes turn when snake turns
+        pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x+head.width/2, head.y+head.height/2+self.EYE_WIDTH/2), self.EYE_SIZE)
+        pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x + head.width / 2, head.y + head.height / 2 - self.EYE_WIDTH / 2), self.EYE_SIZE)
+
+        for i in range(1, len(self.game.snake.snake_body)):
             part_coordinates = self.pos_to_coordinates(self.game.snake.snake_body[i])
             body_part = pygame.Rect(part_coordinates[0], part_coordinates[1], self.FIELD_SIZE, self.FIELD_SIZE)
             pygame.draw.rect(self.WIN, self.SNAKE_COLOR, body_part)
