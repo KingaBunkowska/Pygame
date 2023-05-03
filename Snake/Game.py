@@ -30,10 +30,9 @@ class Game:
         self.snake = snake.Snake(poz_x, poz_y)
 
     def is_field_occupied(self, x, y):
-        if self.snake.is_field_occupied(x, y):
-            for fruit in self.fruits:
-                if fruit == (x, y):
-                    return True
+        for fruit in self.fruits:
+            if fruit[0] == x and fruit[1]==y:
+                return True
         return False
 
     def spawn_fruit(self):
@@ -49,11 +48,13 @@ class Game:
         self.spawn_fruit()
 
     def turn_activity(self):
+        # check if snakes body touched a fruit
         for fruit_no in range(len(self.fruits)):
             if self.snake.head() == self.fruits[fruit_no]:
                 self.snake_eats_fruit()
                 self.fruits.pop(fruit_no)
 
+        #check if snake touched itself or move form board
         if self.snake.collide(self.board_size):
             print("GAME OVER!")
             pygame.quit()
@@ -61,6 +62,7 @@ class Game:
 
 
         self.last_dir = self.turn_dir
+
     def handle_player_moves(self, event):
         dir = self.last_dir
         if event.type == pygame.KEYDOWN:
