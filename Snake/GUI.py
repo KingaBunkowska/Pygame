@@ -7,6 +7,7 @@ class GUI:
     EYE_COLOR = (0, 0, 0)
     EYE_WIDTH = 20
     EYE_SIZE = 5
+    TONGUE_COLOR = (235, 35, 35)
     #TODO:  make eye_width precent value, so it depends on width of snake body
     def __init__(self, game, x_start, y_start, x_end=-1, y_end=-1):
 
@@ -37,41 +38,93 @@ class GUI:
                 i+=1
             FIELD.update(0,self.FIELD_SIZE*(row+1), self.FIELD_SIZE, self.FIELD_SIZE)
 
-
-        #pygame.display.update()
-
-        # draw square representing fields in different colours
-
-        # check if values are actually square
-        #draw_lines between fields
-        #draw background
-        #draw boarders around board(if there is a place for them)
-
     def pos_to_coordinates(self, coordinates): # return top left corner
         return (self.FIELD_SIZE*coordinates[0], self.FIELD_SIZE*coordinates[1])
 
+    #TODO: make tongue to disappear when facing the wall, also make tongue to appear and dissapear
     def draw_snake(self):
 
         head_coordinates = self.pos_to_coordinates(self.game.snake.head())
         head = pygame.Rect(head_coordinates[0], head_coordinates[1], self.FIELD_SIZE, self.FIELD_SIZE)
         pygame.draw.rect(self.WIN, self.SNAKE_COLOR, head)
 
-        # draw eyes
-        #TODO: make eyes turn when snake turns
-        pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x+head.width/2, head.y+head.height/2+self.EYE_WIDTH/2), self.EYE_SIZE)
-        pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x + head.width / 2, head.y + head.height / 2 - self.EYE_WIDTH / 2), self.EYE_SIZE)
+        self.draw_eyes(head)
+        self.draw_tongue(head)
+
+        gradiented_snake_color = [self.SNAKE_COLOR[i] for i in range(3)]
 
         for i in range(1, len(self.game.snake.snake_body)):
+            gradiented_snake_color[2] = min(200, gradiented_snake_color[2]+2)
             part_coordinates = self.pos_to_coordinates(self.game.snake.snake_body[i])
             body_part = pygame.Rect(part_coordinates[0], part_coordinates[1], self.FIELD_SIZE, self.FIELD_SIZE)
-            pygame.draw.rect(self.WIN, self.SNAKE_COLOR, body_part)
+            pygame.draw.rect(self.WIN, gradiented_snake_color, body_part)
 
-        #pygame.display.update()
+    def draw_eyes(self, head:pygame.Rect)->None:
+        if self.game.last_dir[0] != 0:
+            pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x+head.width/2, head.y+head.height/2+self.EYE_WIDTH/2), self.EYE_SIZE)
+            pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x + head.width / 2, head.y + head.height / 2 - self.EYE_WIDTH / 2), self.EYE_SIZE)
+        else:
+            pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x + head.width / 2 + self.EYE_WIDTH / 2, head.y + head.height / 2), self.EYE_SIZE)
+            pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x + head.width / 2 - self.EYE_WIDTH / 2, head.y + head.height / 2), self.EYE_SIZE)
+
+    def draw_tongue(self, head:pygame.Rect)->None:
+        TONGUE_WIDTH = 5
+        TONGUE_LENGHT = 10
+        # left
+        if self.game.last_dir[0] == 1:
+            tongue = pygame.Rect(head.x + head.width, head.y + head.height/2 - TONGUE_WIDTH/2, TONGUE_LENGHT, TONGUE_WIDTH)
+            pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
+                (tongue.x+TONGUE_LENGHT, tongue.y),
+                (tongue.x+TONGUE_WIDTH+TONGUE_LENGHT, tongue.y - TONGUE_WIDTH),
+                (tongue.x+TONGUE_WIDTH+TONGUE_LENGHT, tongue.y - 1),
+                (tongue.x+TONGUE_WIDTH/2+TONGUE_LENGHT, tongue.y + TONGUE_WIDTH/2),
+                (tongue.x+TONGUE_WIDTH+TONGUE_LENGHT, tongue.y + tongue.height),
+                (tongue.x +TONGUE_WIDTH + TONGUE_LENGHT, tongue.y + 2 * TONGUE_WIDTH - 1),
+                (tongue.x + TONGUE_LENGHT, tongue.y+tongue.height-1)
+            ])
+        # right
+        elif self.game.last_dir[0] == -1:
+            tongue = pygame.Rect(head.x - TONGUE_LENGHT, head.y + head.height/2 - TONGUE_WIDTH / 2, TONGUE_LENGHT, TONGUE_WIDTH)
+            pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
+                (tongue.x, tongue.y),
+                (tongue.x - TONGUE_WIDTH, tongue.y - TONGUE_WIDTH),
+                (tongue.x - TONGUE_WIDTH, tongue.y - 2),
+                (tongue.x - TONGUE_WIDTH / 2 + 1, tongue.y + TONGUE_WIDTH / 2),
+                (tongue.x - TONGUE_WIDTH, tongue.y + tongue.height),
+                (tongue.x - TONGUE_WIDTH, tongue.y + 2 * TONGUE_WIDTH - 1),
+                (tongue.x, tongue.y + tongue.height - 1)
+            ])
+        # up
+        elif self.game.last_dir[1] == -1:
+            tongue = pygame.Rect(head.x + head.width/2 - TONGUE_WIDTH/2, head.y - TONGUE_LENGHT, TONGUE_WIDTH, TONGUE_LENGHT)
+            pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
+                (tongue.x, tongue.y),
+                (tongue.x - TONGUE_WIDTH, tongue.y - TONGUE_WIDTH),
+                (tongue.x - 1, tongue.y - TONGUE_WIDTH),
+                (tongue.x+TONGUE_WIDTH/2, tongue.y - TONGUE_WIDTH/2 + 1),
+                (tongue.x+TONGUE_WIDTH, tongue.y - TONGUE_WIDTH),
+                (tongue.x + 2*TONGUE_WIDTH - 1 , tongue.y -TONGUE_WIDTH),
+                (tongue.x+TONGUE_WIDTH - 1, tongue.y)
+            ])
+        # down
+        else:
+            tongue = pygame.Rect(head.x + head.width/2 - TONGUE_WIDTH / 2, head.y + head.height, TONGUE_WIDTH,
+                                 TONGUE_LENGHT)
+            pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
+                (tongue.x, tongue.y + TONGUE_LENGHT),
+                (tongue.x - TONGUE_WIDTH, tongue.y + TONGUE_WIDTH+ TONGUE_LENGHT),
+                (tongue.x - 1, tongue.y + TONGUE_WIDTH + TONGUE_LENGHT),
+                (tongue.x+TONGUE_WIDTH/2, tongue.y + TONGUE_WIDTH/2 + TONGUE_LENGHT),
+                (tongue.x+TONGUE_WIDTH, tongue.y + TONGUE_WIDTH+ TONGUE_LENGHT),
+                (tongue.x + 2*TONGUE_WIDTH - 1 , tongue.y +TONGUE_WIDTH+ TONGUE_LENGHT),
+                (tongue.x + TONGUE_WIDTH - 1, tongue.y+ TONGUE_LENGHT)
+            ])
+
+        pygame.draw.rect(self.WIN, self.TONGUE_COLOR, tongue)
 
     def draw_fruits(self):
         for fruit in self.game.fruits:
             fruit_coordinates = self.pos_to_coordinates(fruit)
             pygame.draw.circle(self.WIN, self.FRUIT_COLOR, (fruit_coordinates[0]+self.FIELD_SIZE//2, fruit_coordinates[1]+self.FIELD_SIZE//2), self.FIELD_SIZE//2)
 
-        #pygame.display.update()
 
