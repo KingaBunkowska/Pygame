@@ -36,10 +36,10 @@ class GUI:
                 pygame.draw.rect(self.WIN, self.FIELD_COLORS[i%2], FIELD)
                 FIELD = FIELD.move(self.FIELD_SIZE, 0)
                 i+=1
-            FIELD.update(0,self.FIELD_SIZE*(row+1), self.FIELD_SIZE, self.FIELD_SIZE)
+            FIELD.update(self.LEFT,self.TOP + self.FIELD_SIZE*(row+1), self.FIELD_SIZE, self.FIELD_SIZE)
 
     def pos_to_coordinates(self, coordinates): # return top left corner
-        return (self.FIELD_SIZE*coordinates[0], self.FIELD_SIZE*coordinates[1])
+        return (self.LEFT + self.FIELD_SIZE*coordinates[0], self.TOP + self.FIELD_SIZE*coordinates[1])
 
     #TODO: make tongue to disappear when facing the wall, also make tongue to appear and dissapear
     def draw_snake(self):
