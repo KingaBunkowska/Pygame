@@ -8,6 +8,8 @@ class GUI:
     EYE_WIDTH = 20
     EYE_SIZE = 5
     TONGUE_COLOR = (235, 35, 35)
+    TONGUE_LENGHT = 10
+    TONGUE_WIDTH = 5
     #TODO:  make eye_width precent value, so it depends on width of snake body
     def __init__(self, game, x_start, y_start, x_end=-1, y_end=-1):
 
@@ -24,6 +26,12 @@ class GUI:
         self.LEFT = x_start
         self.TOP = y_start
         self.FIELD_SIZE = (y_end - y_start)//game.board_size
+
+        self.scale_percent = self.FIELD_SIZE/40
+        self.TONGUE_LENGHT *= self.scale_percent
+        self.TONGUE_WIDTH *= self.scale_percent
+        self.EYE_SIZE *= self.scale_percent
+        self.EYE_WIDTH *= self.scale_percent
 
     def draw_board(self):
         pygame.Surface.fill(self.WIN, self.BACKGROUND_COLOR)
@@ -68,56 +76,54 @@ class GUI:
             pygame.draw.circle(self.WIN, self.EYE_COLOR, (head.x + head.width / 2 - self.EYE_WIDTH / 2, head.y + head.height / 2), self.EYE_SIZE)
 
     def draw_tongue(self, head:pygame.Rect)->None:
-        TONGUE_WIDTH = 5
-        TONGUE_LENGHT = 10
         # left
         if self.game.last_dir[0] == 1:
-            tongue = pygame.Rect(head.x + head.width, head.y + head.height/2 - TONGUE_WIDTH/2, TONGUE_LENGHT, TONGUE_WIDTH)
+            tongue = pygame.Rect(head.x + head.width, head.y + head.height/2 - self.TONGUE_WIDTH/2, self.TONGUE_LENGHT, self.TONGUE_WIDTH)
             pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
-                (tongue.x+TONGUE_LENGHT, tongue.y),
-                (tongue.x+TONGUE_WIDTH+TONGUE_LENGHT, tongue.y - TONGUE_WIDTH),
-                (tongue.x+TONGUE_WIDTH+TONGUE_LENGHT, tongue.y - 1),
-                (tongue.x+TONGUE_WIDTH/2+TONGUE_LENGHT, tongue.y + TONGUE_WIDTH/2),
-                (tongue.x+TONGUE_WIDTH+TONGUE_LENGHT, tongue.y + tongue.height),
-                (tongue.x +TONGUE_WIDTH + TONGUE_LENGHT, tongue.y + 2 * TONGUE_WIDTH - 1),
-                (tongue.x + TONGUE_LENGHT, tongue.y+tongue.height-1)
+                (tongue.x+self.TONGUE_LENGHT, tongue.y),
+                (tongue.x+self.TONGUE_WIDTH+self.TONGUE_LENGHT, tongue.y - self.TONGUE_WIDTH),
+                (tongue.x+self.TONGUE_WIDTH+self.TONGUE_LENGHT, tongue.y - 1),
+                (tongue.x+self.TONGUE_WIDTH/2+self.TONGUE_LENGHT, tongue.y + self.TONGUE_WIDTH/2),
+                (tongue.x+self.TONGUE_WIDTH+self.TONGUE_LENGHT, tongue.y + tongue.height),
+                (tongue.x +self.TONGUE_WIDTH + self.TONGUE_LENGHT, tongue.y + 2 * self.TONGUE_WIDTH - 1),
+                (tongue.x + self.TONGUE_LENGHT, tongue.y+tongue.height-1)
             ])
         # right
         elif self.game.last_dir[0] == -1:
-            tongue = pygame.Rect(head.x - TONGUE_LENGHT, head.y + head.height/2 - TONGUE_WIDTH / 2, TONGUE_LENGHT, TONGUE_WIDTH)
+            tongue = pygame.Rect(head.x - self.TONGUE_LENGHT, head.y + head.height/2 - self.TONGUE_WIDTH / 2, self.TONGUE_LENGHT, self.TONGUE_WIDTH)
             pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
                 (tongue.x, tongue.y),
-                (tongue.x - TONGUE_WIDTH, tongue.y - TONGUE_WIDTH),
-                (tongue.x - TONGUE_WIDTH, tongue.y - 2),
-                (tongue.x - TONGUE_WIDTH / 2 + 1, tongue.y + TONGUE_WIDTH / 2),
-                (tongue.x - TONGUE_WIDTH, tongue.y + tongue.height),
-                (tongue.x - TONGUE_WIDTH, tongue.y + 2 * TONGUE_WIDTH - 1),
+                (tongue.x - self.TONGUE_WIDTH, tongue.y - self.TONGUE_WIDTH),
+                (tongue.x - self.TONGUE_WIDTH, tongue.y - 2),
+                (tongue.x - self.TONGUE_WIDTH / 2 + 1, tongue.y + self.TONGUE_WIDTH / 2),
+                (tongue.x - self.TONGUE_WIDTH, tongue.y + tongue.height),
+                (tongue.x - self.TONGUE_WIDTH, tongue.y + 2 * self.TONGUE_WIDTH - 1),
                 (tongue.x, tongue.y + tongue.height - 1)
             ])
         # up
         elif self.game.last_dir[1] == -1:
-            tongue = pygame.Rect(head.x + head.width/2 - TONGUE_WIDTH/2, head.y - TONGUE_LENGHT, TONGUE_WIDTH, TONGUE_LENGHT)
+            tongue = pygame.Rect(head.x + head.width/2 - self.TONGUE_WIDTH/2, head.y - self.TONGUE_LENGHT, self.TONGUE_WIDTH, self.TONGUE_LENGHT)
             pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
                 (tongue.x, tongue.y),
-                (tongue.x - TONGUE_WIDTH, tongue.y - TONGUE_WIDTH),
-                (tongue.x - 1, tongue.y - TONGUE_WIDTH),
-                (tongue.x+TONGUE_WIDTH/2, tongue.y - TONGUE_WIDTH/2 + 1),
-                (tongue.x+TONGUE_WIDTH, tongue.y - TONGUE_WIDTH),
-                (tongue.x + 2*TONGUE_WIDTH - 1 , tongue.y -TONGUE_WIDTH),
-                (tongue.x+TONGUE_WIDTH - 1, tongue.y)
+                (tongue.x - self.TONGUE_WIDTH, tongue.y - self.TONGUE_WIDTH),
+                (tongue.x - 1, tongue.y - self.TONGUE_WIDTH),
+                (tongue.x+self.TONGUE_WIDTH/2, tongue.y - self.TONGUE_WIDTH/2 + 1),
+                (tongue.x+self.TONGUE_WIDTH, tongue.y - self.TONGUE_WIDTH),
+                (tongue.x + 2*self.TONGUE_WIDTH - 1 , tongue.y -self.TONGUE_WIDTH),
+                (tongue.x+self.TONGUE_WIDTH - 1, tongue.y)
             ])
         # down
         else:
-            tongue = pygame.Rect(head.x + head.width/2 - TONGUE_WIDTH / 2, head.y + head.height, TONGUE_WIDTH,
-                                 TONGUE_LENGHT)
+            tongue = pygame.Rect(head.x + head.width/2 - self.TONGUE_WIDTH / 2, head.y + head.height, self.TONGUE_WIDTH,
+                                 self.TONGUE_LENGHT)
             pygame.draw.polygon(self.WIN, self.TONGUE_COLOR, [
-                (tongue.x, tongue.y + TONGUE_LENGHT),
-                (tongue.x - TONGUE_WIDTH, tongue.y + TONGUE_WIDTH+ TONGUE_LENGHT),
-                (tongue.x - 1, tongue.y + TONGUE_WIDTH + TONGUE_LENGHT),
-                (tongue.x+TONGUE_WIDTH/2, tongue.y + TONGUE_WIDTH/2 + TONGUE_LENGHT),
-                (tongue.x+TONGUE_WIDTH, tongue.y + TONGUE_WIDTH+ TONGUE_LENGHT),
-                (tongue.x + 2*TONGUE_WIDTH - 1 , tongue.y +TONGUE_WIDTH+ TONGUE_LENGHT),
-                (tongue.x + TONGUE_WIDTH - 1, tongue.y+ TONGUE_LENGHT)
+                (tongue.x, tongue.y + self.TONGUE_LENGHT),
+                (tongue.x - self.TONGUE_WIDTH, tongue.y + self.TONGUE_WIDTH+ self.TONGUE_LENGHT),
+                (tongue.x - 1, tongue.y + self.TONGUE_WIDTH + self.TONGUE_LENGHT),
+                (tongue.x+self.TONGUE_WIDTH/2, tongue.y + self.TONGUE_WIDTH/2 + self.TONGUE_LENGHT),
+                (tongue.x+self.TONGUE_WIDTH, tongue.y + self.TONGUE_WIDTH+ self.TONGUE_LENGHT),
+                (tongue.x + 2*self.TONGUE_WIDTH - 1 , tongue.y +self.TONGUE_WIDTH+ self.TONGUE_LENGHT),
+                (tongue.x + self.TONGUE_WIDTH - 1, tongue.y+ self.TONGUE_LENGHT)
             ])
 
         pygame.draw.rect(self.WIN, self.TONGUE_COLOR, tongue)
