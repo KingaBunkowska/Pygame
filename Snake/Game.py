@@ -19,7 +19,7 @@ class Game:
 
         self.spawn_snake()
 
-        for i in range(fruit_number):
+        for i in range(fruit_number-1):
             self.spawn_fruit()
 
     def set_random_start(self, bool):
@@ -75,6 +75,7 @@ class Game:
             if event.key == pygame.K_a:
                 dir = (-1, 0)
 
+            # check if desired move is valid
             if dir[0] == (-1)*self.last_dir[0] and dir[1] == (-1)*self.last_dir[1]:
                 dir = self.turn_dir
 

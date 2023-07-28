@@ -15,7 +15,7 @@ def handle_events(game = None):
 
 
 if __name__ == "__main__":
-    game = Game.Game(fruit_number=50)
+    game = Game.Game(fruit_number=1)
     games =[game]
     gui = GUI.GUI(game, 0, 0)
     clock = pygame.time.Clock()
