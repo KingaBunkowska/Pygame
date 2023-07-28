@@ -5,23 +5,26 @@ import GUI
 
 FPS = 60
 
-def handle_events(game = None):
+
+def handle_events(game=None):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-        if game!=None:
+        if game != None:
             game.handle_player_moves(event)
 
 
 if __name__ == "__main__":
     game = Game.Game(fruit_number=1)
-    games =[game]
+    games = [game]
     gui = GUI.GUI(game, 0, 0)
     clock = pygame.time.Clock()
     ticks_in_game = 0
 
-    while 1: #for testing purposes, that should be done by game class probably, but clock should be only one, so if more than one game is launch, it will be synchronous
+    while (
+        1
+    ):  # for testing purposes, that should be done by game class probably, but clock should be only one, so if more than one game is launch, it will be synchronous
         clock.tick(FPS)
         handle_events(game)
 
@@ -29,16 +32,11 @@ if __name__ == "__main__":
         gui.draw_snake()
         gui.draw_fruits()
 
-
         pygame.display.flip()
-        ticks_in_game+=1
-        if ticks_in_game%10 == 9:
+        ticks_in_game += 1
+        if ticks_in_game % 10 == 9:
             game.snake.move()
             game.turn_activity()
 
 # TO-DO
-# when snake covers all board it should be win
-# handle how many fruits can be generated (and maybe if there is not a place for it it should not be placed but the game would continue)
-# score
 # problems when more than one game works in the same time
-# snake should change color to indicates how long will this body part stay on field
