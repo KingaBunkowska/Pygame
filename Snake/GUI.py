@@ -11,7 +11,6 @@ class GUI:
     TONGUE_LENGHT = 10
     TONGUE_WIDTH = 5
 
-    # TODO:  make eye_width precent value, so it depends on width of snake body
     def __init__(self, game, x_start, y_start, x_end=-1, y_end=-1):
         self.WIDTH, self.HEIGHT = 800, 600
         self.WIN = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
@@ -57,7 +56,6 @@ class GUI:
             self.TOP + self.FIELD_SIZE * coordinates[1],
         )
 
-    # TODO: make tongue to disappear when facing the wall, also make tongue to appear and dissapear
     def draw_snake(self):
         head_coordinates = self.pos_to_coordinates(self.game.snake.head())
         head = pygame.Rect(
@@ -66,7 +64,8 @@ class GUI:
         pygame.draw.rect(self.WIN, self.SNAKE_COLOR, head)
 
         self.draw_eyes(head)
-        self.draw_tongue(head)
+        if not self.game.snake_is_facing_boarder():
+            self.draw_tongue(head)
 
         gradiented_snake_color = [self.SNAKE_COLOR[i] for i in range(3)]
 
