@@ -1,35 +1,50 @@
 import random
 import pygame
 import snake
+import GUI
+import main
+import time
 
 
 class Game:
     board_size = 15
-    random_start = False
     snake = None
     fruits = [(10, 7)]
     last_dir = (1, 0)
     turn_dir = (1, 0)
     score = 0
+    start_time = time.time()
 
     def __init__(self, s=15, fruit_number=0):
         if s >= 3 and s <= 40:
             self.board_size = s
         else:
             self.board_size = 15
-        self.random_start = False
 
         self.spawn_snake()
 
         for i in range(fruit_number - 1):
             self.spawn_fruit()
 
-    def set_random_start(self, bool):
-        if bool == 0 or bool == 1:
-            self.random_start = bool
-
     def spawn_snake(self, poz_x=board_size // 2, poz_y=board_size // 2):
         self.snake = snake.Snake(poz_x, poz_y)
+
+    def snake_is_facing_boarder(self):
+
+        # left
+        if self.snake.head()[0] == 0 and self.last_dir==(-1, 0):
+            return True
+        # right
+        if self.snake.head()[0] == self.board_size-1 and self.last_dir==(1, 0):
+            return True
+        # up
+        if self.snake.head()[1] == 0 and self.last_dir==(0, -1):
+            return True
+        # down
+        if self.snake.head()[1] == self.board_size-1 and self.last_dir==(0, 1):
+            return True
+    
+        return False
 
     def is_field_occupied(self, x, y):
         for fruit in self.fruits:
@@ -98,3 +113,27 @@ class Game:
 
             self.turn_dir = dir
             self.snake.set_dir(dir)
+
+    def run(self, clock):
+        gui = GUI.GUI(self, 5, 5)  
+        ticks_in_game = 0
+        while (1):
+            clock.tick(main.FPS)
+            main.handle_events(self)
+
+            
+            ticks_in_game += 1
+            if ticks_in_game % 10 == 9:
+
+                self.snake.move()
+                self.turn_activity() 
+
+                gui.draw_board()
+                gui.draw_snake()
+                gui.draw_fruits()
+                gui.draw_border()
+                gui.draw_score(self.score)
+                gui.draw_time(time.time()-self.start_time)
+
+                pygame.display.flip()
+
