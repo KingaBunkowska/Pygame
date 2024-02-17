@@ -3,6 +3,7 @@ import pygame
 import snake
 import GUI
 import main
+import time
 
 
 class Game:
@@ -12,6 +13,7 @@ class Game:
     last_dir = (1, 0)
     turn_dir = (1, 0)
     score = 0
+    start_time = time.time()
 
     def __init__(self, s=15, fruit_number=0):
         if s >= 3 and s <= 40:
@@ -113,7 +115,7 @@ class Game:
             self.snake.set_dir(dir)
 
     def run(self, clock):
-        gui = GUI.GUI(self, 0, 0)  
+        gui = GUI.GUI(self, 5, 5)  
         ticks_in_game = 0
         while (1):
             clock.tick(main.FPS)
@@ -129,6 +131,9 @@ class Game:
                 gui.draw_board()
                 gui.draw_snake()
                 gui.draw_fruits()
+                gui.draw_border()
+                gui.draw_score(self.score)
+                gui.draw_time(time.time()-self.start_time)
 
                 pygame.display.flip()
 

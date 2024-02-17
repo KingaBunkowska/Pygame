@@ -10,9 +10,12 @@ class GUI:
     TONGUE_COLOR = (235, 35, 35)
     TONGUE_LENGHT = 10
     TONGUE_WIDTH = 5
+    FONT = pygame.font.SysFont("Arial", 32)
+
+    
 
     def __init__(self, game, x_start, y_start, x_end=-1, y_end=-1):
-        self.WIDTH, self.HEIGHT = 800, 600
+        self.WIDTH, self.HEIGHT = 810, 610
         self.WIN = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.FIELD_COLORS = ((100, 230, 150), (50, 230, 80))
         self.BACKGROUND_COLOR = (120, 190, 160)
@@ -49,6 +52,13 @@ class GUI:
                 self.FIELD_SIZE,
                 self.FIELD_SIZE,
             )
+
+
+    def draw_border(self):
+        border_radious = 5
+        all_board = pygame.Rect(self.LEFT-border_radious, self.TOP-border_radious, 2*border_radious + self.FIELD_SIZE*self.game.board_size, 2*border_radious + self.FIELD_SIZE*self.game.board_size)
+
+        pygame.draw.rect(self.WIN, (80, 60, 60), all_board, width = 5)
 
     def pos_to_coordinates(self, coordinates):  # return top left corner
         return (
@@ -256,3 +266,13 @@ class GUI:
                 ),
                 self.FIELD_SIZE // 2,
             )
+
+    def draw_score(self, score):
+        text_surface = self.FONT.render("Score: " + str(score), True, (0, 0, 0))
+        text_rect = text_surface.get_rect(center=(700, 100))
+        self.WIN.blit(text_surface, text_rect)
+
+    def draw_time(self, time):
+        text_surface = self.FONT.render("Time: " + str(round(time, 1)), True, (0, 0, 0))
+        text_rect = text_surface.get_rect(center=(700, 200))
+        self.WIN.blit(text_surface, text_rect)
